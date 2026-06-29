@@ -1,0 +1,93 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=League+Spartan:wght@500&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-league-spartan: "League Spartan", sans-serif;
+  --color-primary: #0d50ff;
+  --color-primaryBG: #cad6ff;
+  --color-primaryBGField: #e9f6fe;
+  --color-teal: #00bbd3;
+  --color-background: #f7f8ff;
+  --color-card: #ffffff;
+  --color-text: #0f172a;
+  --color-muted: #d1d5db;
+  --color-border: #e2e8f0;
+  --color-stat-purple: #9333ea;
+  --color-stat-green: #16a34a;
+  --color-stat-red: #ef4444;
+  --color-stat-yellow: #eab308;
+}
+
+html,
+body {
+  font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+  background-color: #f7f8ff;
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+[data-theme="dark"] body {
+  background: linear-gradient(180deg, #1a1a1a 0%, #1e1e2e 30%, #1a1a2e 60%, #1a1a2e 85%, #1e1e2e 100%);
+  background-attachment: fixed;
+}
+
+[data-theme="dark"] {
+  --color-primaryBGField: #2a2a3a;
+}
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: calc(0.75rem + env(safe-area-inset-top));
+  }
+}
+
+@supports not (padding: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: 0;
+  }
+  .pt-safe {
+    padding-top: 0.75rem;
+  }
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-muted);
+  border-radius: 9999px;
+}
+
+.stats-section-title {
+  font-family: var(--font-league-spartan);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 22px;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: capitalize;
+  color: var(--color-text);
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out forwards;
+}
