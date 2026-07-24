@@ -9,6 +9,7 @@ import type { LabRequest, WorkflowStep } from "@/src/types/requests";
 interface WorkflowRequestCardProps {
   request: LabRequest;
   onAction: () => void;
+  disabled?: boolean;
 }
 
 const actionLabels: Record<WorkflowStep, string> = {
@@ -22,6 +23,7 @@ const actionLabels: Record<WorkflowStep, string> = {
 export default function WorkflowRequestCard({
   request,
   onAction,
+  disabled = false,
 }: WorkflowRequestCardProps) {
   const t = useTranslations();
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function WorkflowRequestCard({
   const actionColor = STEP_COLORS[step];
 
   const handleClick = () => {
+    if (disabled) return;
     if (step === "delivered") {
       router.push(`/request/${request.id}/complete`);
       return;
@@ -71,7 +74,8 @@ export default function WorkflowRequestCard({
       <button
         type="button"
         onClick={handleClick}
-        className="flex w-14 shrink-0 flex-col items-center justify-center gap-1 text-white transition hover:opacity-90"
+        disabled={disabled}
+        className="flex w-14 shrink-0 flex-col items-center justify-center gap-1 text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         style={{ backgroundColor: actionColor }}
         aria-label={t(actionKey)}
       >

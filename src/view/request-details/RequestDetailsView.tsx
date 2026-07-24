@@ -1,12 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Arrow, Phone } from "@/src/components/icon";
 import { Microscope } from "@/src/components/icon";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
-import { getRequestDetail } from "@/src/data/requestDetails";
-import type { LabRequest } from "@/src/types/requests";
+import type { LabRequest, LabRequestDetail } from "@/src/types/requests";
 
 interface RequestDetailsViewProps {
   request: LabRequest;
@@ -15,26 +15,74 @@ interface RequestDetailsViewProps {
 export default function RequestDetailsView({ request }: RequestDetailsViewProps) {
   const t = useTranslations();
   const router = useRouter();
-  const { approveRequest, ignoreRequest } = useRequests();
-  const detail = getRequestDetail(request);
+  const { approveRequest, ignoreRequest, loadRequestDetail } = useRequests();
+  const [detail, setDetail] = useState<LabRequestDetail | null>(
+    request.detail ?? null,
+  );
+  const [loadingDetail, setLoadingDetail] = useState(!request.detail?.patientName || request.detail.patientName === "—");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingDetail(true);
+    loadRequestDetail(request.id)
+      .then((loaded) => {
+        if (!cancelled && loaded) setDetail(loaded);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDetail(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Only re-fetch when the request id changes — loadRequestDetail is stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request.id]);
 
   const handleAccept = async () => {
-    await approveRequest(request.id, detail);
-    sessionStorage.setItem(TAB_STORAGE_KEY, "approved");
-    router.replace("/");
+    if (!detail || submitting) return;
+    setSubmitting(true);
+    try {
+      await approveRequest(request.id, detail);
+      sessionStorage.setItem(TAB_STORAGE_KEY, "approved");
+      router.replace("/");
+    } catch {
+      setSubmitting(false);
+    }
   };
 
   const handleIgnore = async () => {
+    if (submitting) return;
+    setSubmitting(true);
     await ignoreRequest(request.id);
     router.replace("/");
   };
 
   const openMaps = () => {
+    if (!detail) return;
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detail.mapQuery)}`,
       "_blank",
     );
   };
+
+  if (loadingDetail && !detail) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <div className="rounded-2xl border border-border bg-card py-10 text-center text-sm text-text/50">
+        {t("noRequests")}
+      </div>
+    );
+  }
+
+  const phoneHref = detail.phone ? `tel:${detail.phone}` : undefined;
 
   return (
     <div className="pb-8">
@@ -50,15 +98,20 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       <SectionTitle>{t("requestDetails")}</SectionTitle>
       <Card>
         <p className="text-base font-bold text-primary">{detail.patientName}</p>
-        <a
-          href={`tel:${detail.phone}`}
-          className="mt-2 inline-flex items-center gap-2 text-sm text-teal underline"
-        >
-          <Phone className="h-4 w-4" color="#00BBD3" />
-          {detail.phone}
-        </a>
+        {phoneHref ? (
+          <a
+            href={phoneHref}
+            className="mt-2 inline-flex items-center gap-2 text-sm text-teal underline"
+          >
+            <Phone className="h-4 w-4" color="#00BBD3" />
+            {detail.phone}
+          </a>
+        ) : (
+          <p className="mt-2 text-sm text-text/40">—</p>
+        )}
         <p className="mt-2 text-xs text-text/50">
-          {detail.gender} · {detail.age} {t("yearsOld")}
+          {detail.gender}
+          {detail.age > 0 ? ` · ${detail.age} ${t("yearsOld")}` : ""}
         </p>
       </Card>
 
@@ -88,14 +141,18 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
 
       <SectionTitle>{t("diseases")}</SectionTitle>
       <div className="flex flex-wrap gap-2">
-        {detail.diseases.map((disease) => (
-          <span
-            key={disease}
-            className="rounded-full bg-teal/15 px-3 py-1 text-xs font-medium text-text"
-          >
-            {disease}
-          </span>
-        ))}
+        {detail.diseases.length > 0 ? (
+          detail.diseases.map((disease) => (
+            <span
+              key={disease}
+              className="rounded-full bg-teal/15 px-3 py-1 text-xs font-medium text-text"
+            >
+              {disease}
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-text/40">—</span>
+        )}
         {detail.outlinedDiseases.map((disease) => (
           <span
             key={disease}
@@ -118,13 +175,17 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       <SectionTitle className="mt-5">{t("patientComment")}</SectionTitle>
       <Card className="border-2 border-teal">
         <p className="text-sm font-semibold text-text">{t("patientComment")}</p>
-        <p className="mt-2 text-xs text-text/50">{detail.patientComment}</p>
+        <p className="mt-2 text-xs text-text/50">
+          {detail.patientComment || "—"}
+        </p>
       </Card>
 
       <SectionTitle className="mt-5">{t("supervisorComment")}</SectionTitle>
       <Card className="border-2 border-red-500">
         <p className="text-sm font-bold text-text">{t("supervisorComment")}</p>
-        <p className="mt-2 text-sm text-red-500">{detail.supervisorComment}</p>
+        <p className="mt-2 text-sm text-red-500">
+          {detail.supervisorComment || "—"}
+        </p>
       </Card>
 
       <SectionTitle className="mt-5">{t("address")}</SectionTitle>
@@ -157,14 +218,16 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         <button
           type="button"
           onClick={handleAccept}
-          className="rounded-2xl bg-primary py-3 text-sm font-bold text-white transition hover:bg-primary/90"
+          disabled={submitting || loadingDetail}
+          className="rounded-2xl bg-primary py-3 text-sm font-bold text-white transition hover:bg-primary/90 disabled:opacity-60"
         >
           {t("accept")}
         </button>
         <button
           type="button"
           onClick={handleIgnore}
-          className="rounded-2xl border-2 border-teal py-3 text-sm font-bold text-teal transition hover:bg-teal/5"
+          disabled={submitting}
+          className="rounded-2xl border-2 border-teal py-3 text-sm font-bold text-teal transition hover:bg-teal/5 disabled:opacity-60"
         >
           {t("ignore")}
         </button>

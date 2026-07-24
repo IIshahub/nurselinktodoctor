@@ -8,19 +8,75 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { initialRequests } from "@/src/data/initialRequests";
-import { getRequestDetail } from "@/src/data/requestDetails";
+import {
+  ApiError,
+  fetchAllRequests,
+  fetchRequestDetail,
+  sendWorkflowAction,
+} from "@/src/lib/api";
 import { formatTimeNow } from "@/src/lib/workflow";
 import type {
   CompletionReport,
   LabRequest,
   LabRequestDetail,
   RequestStatus,
+  WorkflowStep,
 } from "@/src/types/requests";
 import { WORKFLOW_STEPS } from "@/src/types/requests";
 
-const STORAGE_KEY = "lablinktodoctor-requests";
 export const TAB_STORAGE_KEY = "lablinktodoctor-tab";
+
+// List endpoints don't report the current workflow step. Detail endpoints
+// expose arrivalStatue; until that is applied we keep a local overlay for
+// ignore / completion report / intermediate step progress.
+const OVERLAY_STORAGE_KEY = "lablinktodoctor-overlay";
+
+interface RequestOverlay {
+  workflowStep?: WorkflowStep;
+  status?: RequestStatus;
+  startedAt?: string;
+  completedAt?: string;
+  completionReport?: CompletionReport;
+  collectorComment?: string;
+  detail?: LabRequestDetail;
+}
+
+interface OverlayState {
+  byId: Record<number, RequestOverlay>;
+  ignoredIds: number[];
+}
+
+const EMPTY_OVERLAY: OverlayState = { byId: {}, ignoredIds: [] };
+
+function loadOverlay(): OverlayState {
+  if (typeof window === "undefined") return EMPTY_OVERLAY;
+  try {
+    const raw = localStorage.getItem(OVERLAY_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<OverlayState>;
+      return {
+        byId: parsed.byId ?? {},
+        ignoredIds: parsed.ignoredIds ?? [],
+      };
+    }
+  } catch {
+    // ignore corrupted storage
+  }
+  return EMPTY_OVERLAY;
+}
+
+function saveOverlay(overlay: OverlayState) {
+  try {
+    localStorage.setItem(OVERLAY_STORAGE_KEY, JSON.stringify(overlay));
+  } catch {
+    // storage unavailable
+  }
+}
+
+function workflowRank(step?: WorkflowStep) {
+  if (!step) return -1;
+  return WORKFLOW_STEPS.indexOf(step);
+}
 
 const STATUS_RANK: Record<RequestStatus, number> = {
   new: 0,
@@ -29,68 +85,47 @@ const STATUS_RANK: Record<RequestStatus, number> = {
   completed: 3,
 };
 
-function workflowRank(step?: LabRequest["workflowStep"]) {
-  if (!step) return -1;
-  return WORKFLOW_STEPS.indexOf(step);
-}
+function applyOverlay(
+  serverRequests: LabRequest[],
+  overlay: OverlayState,
+): LabRequest[] {
+  const ignored = new Set(overlay.ignoredIds);
+  return serverRequests
+    .filter((request) => !ignored.has(request.id))
+    .map((request) => {
+      const patch = overlay.byId[request.id];
+      if (!patch) return request;
 
-function mergeRequests(local: LabRequest[], api: LabRequest[]): LabRequest[] {
-  const apiById = new Map(api.map((r) => [r.id, r]));
-  const localById = new Map(local.map((r) => [r.id, r]));
-  const allIds = new Set([
-    ...local.map((r) => r.id),
-    ...api.map((r) => r.id),
-  ]);
+      const merged: LabRequest = { ...request };
 
-  return Array.from(allIds)
-    .sort((a, b) => a - b)
-    .map((id) => {
-      const localReq = localById.get(id);
-      const apiReq = apiById.get(id);
-      if (!localReq) return apiReq!;
-      if (!apiReq) return localReq;
+      // Prefer the further-along workflow/status so a stale local overlay
+      // cannot roll the UI back behind the backend arrivalStatue.
+      const serverStepRank = workflowRank(request.workflowStep);
+      const overlayStepRank = workflowRank(patch.workflowStep);
+      if (overlayStepRank > serverStepRank && patch.workflowStep) {
+        merged.workflowStep = patch.workflowStep;
+      }
+      if (
+        patch.status &&
+        STATUS_RANK[patch.status] > STATUS_RANK[request.status]
+      ) {
+        merged.status = patch.status;
+      }
 
-      const localRank = STATUS_RANK[localReq.status];
-      const apiRank = STATUS_RANK[apiReq.status];
-      if (apiRank !== localRank) return apiRank > localRank ? apiReq : localReq;
+      if (patch.startedAt) merged.startedAt = patch.startedAt;
+      if (patch.completedAt) merged.completedAt = patch.completedAt;
+      if (patch.completionReport) merged.completionReport = patch.completionReport;
+      if (patch.collectorComment) merged.collectorComment = patch.collectorComment;
+      // Prefer API detail (patient name etc.) over placeholder list detail.
+      if (patch.detail?.patientName && patch.detail.patientName !== "—") {
+        merged.detail = patch.detail;
+        merged.address = patch.detail.address || merged.address;
+      } else if (!merged.detail && patch.detail) {
+        merged.detail = patch.detail;
+      }
 
-      const localStep = workflowRank(localReq.workflowStep);
-      const apiStep = workflowRank(apiReq.workflowStep);
-      return apiStep > localStep ? apiReq : localReq;
+      return merged;
     });
-}
-
-function save(next: LabRequest[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-}
-
-function loadLocalRequests(): LabRequest[] {
-  if (typeof window === "undefined") return initialRequests;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored) as LabRequest[];
-  } catch {
-    // ignore
-  }
-  return initialRequests;
-}
-
-async function patchRequest(id: number, patch: Partial<LabRequest>) {
-  const response = await fetch(`/api/requests/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(patch),
-  });
-  if (!response.ok) throw new Error("Failed to update request");
-  return (await response.json()) as LabRequest;
-}
-
-async function syncAll(requests: LabRequest[]) {
-  await fetch("/api/requests", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requests),
-  });
 }
 
 interface RequestsContextValue {
@@ -99,6 +134,9 @@ interface RequestsContextValue {
   approveRequest: (id: number, detail?: LabRequestDetail) => Promise<void>;
   ignoreRequest: (id: number) => Promise<void>;
   advanceWorkflow: (id: number) => Promise<LabRequest | undefined>;
+  loadRequestDetail: (id: number) => Promise<LabRequestDetail | null>;
+  actionError: string | null;
+  clearActionError: () => void;
   completeRequest: (
     id: number,
     report: CompletionReport,
@@ -110,91 +148,126 @@ interface RequestsContextValue {
 const RequestsContext = createContext<RequestsContextValue | undefined>(undefined);
 
 export function RequestsProvider({ children }: { children: React.ReactNode }) {
-  const [requests, setRequests] = useState<LabRequest[]>(initialRequests);
+  const [serverRequests, setServerRequests] = useState<LabRequest[]>([]);
+  const [overlay, setOverlay] = useState<OverlayState>(EMPTY_OVERLAY);
   const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const requests = useMemo(
+    () => applyOverlay(serverRequests, overlay),
+    [serverRequests, overlay],
+  );
+
+  // Keep a stable snapshot for callbacks so they don't recreate on every
+  // overlay/list update (which previously caused an infinite detail-fetch loop).
+  const requestsRef = React.useRef(requests);
+  requestsRef.current = requests;
+
+  const refresh = useCallback(async () => {
+    const data = await fetchAllRequests();
+    setServerRequests(data);
+    return data;
+  }, []);
 
   useEffect(() => {
-    const load = async () => {
-      const local = loadLocalRequests();
-      try {
-        const response = await fetch("/api/requests");
-        if (!response.ok) {
-          setRequests(local);
-          return;
-        }
-        const apiData = (await response.json()) as LabRequest[];
-        const hasLocalProgress = local.some(
-          (r) => r.status !== "new" || r.workflowStep || r.completionReport,
-        );
-        const data = hasLocalProgress ? mergeRequests(local, apiData) : apiData;
-        setRequests(data);
-        save(data);
-        if (hasLocalProgress) {
-          syncAll(data).catch(() => undefined);
-        }
-      } catch {
-        setRequests(local);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    load();
-  }, []);
+    setOverlay(loadOverlay());
+    refresh()
+      .catch((error) => {
+        console.error("[requests] failed to load from backend", error);
+      })
+      .finally(() => setIsLoading(false));
+  }, [refresh]);
 
   const getRequestById = useCallback(
     (id: number) => requests.find((r) => r.id === id),
     [requests],
   );
 
-  // Applies patch to the current snapshot, saves to localStorage synchronously,
-  // updates react state, then tries to sync to API in background.
-  const applyAndSync = useCallback(
-    (id: number, patch: Partial<LabRequest>): LabRequest[] => {
-      const next = requests.map((r) =>
-        r.id === id ? { ...r, ...patch } : r,
-      );
-      save(next); // ← synchronous, happens BEFORE any navigation
-      setRequests(next);
-      patchRequest(id, patch).then((updated) => {
-        setRequests((prev) => {
-          const fresh = prev.map((r) => (r.id === id ? updated : r));
-          save(fresh);
-          return fresh;
-        });
-      }).catch(() => {
-        // already saved locally, good enough
-      });
+  const patchOverlay = useCallback((id: number, patch: RequestOverlay) => {
+    setOverlay((prev) => {
+      const next: OverlayState = {
+        ...prev,
+        byId: { ...prev.byId, [id]: { ...prev.byId[id], ...patch } },
+      };
+      saveOverlay(next);
       return next;
+    });
+  }, []);
+
+  const clearActionError = useCallback(() => setActionError(null), []);
+
+  const loadRequestDetail = useCallback(
+    async (id: number): Promise<LabRequestDetail | null> => {
+      const current = requestsRef.current.find((r) => r.id === id);
+      if (!current) return null;
+
+      try {
+        const result = await fetchRequestDetail(
+          current.requestType,
+          current.apiId,
+        );
+        const patch: RequestOverlay = { detail: result.detail };
+        if (result.workflowStep) {
+          // Prefer backend arrivalStatue over stale local overlay for confirmed items.
+          if (current.status !== "new" && current.status !== "completed") {
+            patch.workflowStep = result.workflowStep;
+            if (result.status) patch.status = result.status;
+            if (result.workflowStep !== "start" && !current.startedAt) {
+              patch.startedAt = formatTimeNow();
+            }
+          }
+        }
+        patchOverlay(id, patch);
+        return result.detail;
+      } catch (error) {
+        console.error("[requests] failed to load detail", error);
+        return current.detail ?? null;
+      }
     },
-    [requests],
+    [patchOverlay],
   );
 
   const approveRequest = useCallback(
     async (id: number, detail?: LabRequestDetail) => {
       const current = requests.find((r) => r.id === id);
       if (!current) return;
-      const resolvedDetail = detail ?? getRequestDetail(current);
-      applyAndSync(id, {
+
+      setActionError(null);
+      try {
+        await sendWorkflowAction(current.requestType, "approve", current.apiId);
+      } catch (error) {
+        // Request may already be approved on the backend while the UI still
+        // shows it as new (e.g. after a refresh or stale local overlay).
+        if (!(error instanceof ApiError) || error.status !== 404) {
+          setActionError(error instanceof Error ? error.message : "approve failed");
+          throw error;
+        }
+      }
+
+      const patch: RequestOverlay = {
         status: "approved",
         workflowStep: "start",
-        detail: resolvedDetail,
-        date: resolvedDetail.requestDate,
-        time: resolvedDetail.requestTime,
-        address: resolvedDetail.address,
-      });
+      };
+      if (detail) {
+        patch.detail = detail;
+      }
+      patchOverlay(id, patch);
+      await refresh().catch(() => undefined);
     },
-    [requests, applyAndSync],
+    [requests, patchOverlay, refresh],
   );
 
-  const ignoreRequest = useCallback(
-    async (id: number) => {
-      const next = requests.filter((r) => r.id !== id);
-      save(next);
-      setRequests(next);
-      syncAll(next).catch(() => undefined);
-    },
-    [requests],
-  );
+  // No backend endpoint for ignoring yet: hide the request locally.
+  const ignoreRequest = useCallback(async (id: number) => {
+    setOverlay((prev) => {
+      const next: OverlayState = {
+        ...prev,
+        ignoredIds: [...new Set([...prev.ignoredIds, id])],
+      };
+      saveOverlay(next);
+      return next;
+    });
+  }, []);
 
   const advanceWorkflow = useCallback(
     async (id: number) => {
@@ -205,29 +278,59 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
       const nextStep = WORKFLOW_STEPS[currentIndex + 1];
       if (!nextStep || current.workflowStep === "delivered") return current;
 
-      const patch: Partial<LabRequest> = { workflowStep: nextStep, status: "inProgress" };
+      const action =
+        nextStep === "arrived"
+          ? "arrive"
+          : nextStep === "left"
+            ? "leave"
+            : "deliver";
+
+      const patch: RequestOverlay = {
+        workflowStep: nextStep,
+        status: "inProgress",
+      };
       if (current.workflowStep === "start") patch.startedAt = formatTimeNow();
 
-      const next = applyAndSync(id, patch);
-      return next.find((r) => r.id === id);
+      setActionError(null);
+      try {
+        await sendWorkflowAction(current.requestType, action, current.apiId);
+      } catch (error) {
+        // Backend list endpoints don't expose the current workflow step, so the
+        // UI can show "start" while the server is already at arrived/left/etc.
+        // A 404 here usually means that transition already happened — sync locally.
+        if (error instanceof ApiError && error.status === 404) {
+          patchOverlay(id, patch);
+          await refresh().catch(() => undefined);
+          return { ...current, ...patch };
+        }
+
+        const message = error instanceof Error ? error.message : "workflow failed";
+        setActionError(message);
+        throw error;
+      }
+
+      patchOverlay(id, patch);
+      await refresh().catch(() => undefined);
+      return { ...current, ...patch };
     },
-    [requests, applyAndSync],
+    [requests, patchOverlay, refresh],
   );
 
+  // The backend has no completion-report endpoint yet; the "deliver" action
+  // (sent on the previous step) already moves the request to completed on the
+  // server, so the report itself is stored locally.
   const completeRequest = useCallback(
     async (id: number, report: CompletionReport, collectorComment?: string) => {
-      const patch: Partial<LabRequest> = {
+      patchOverlay(id, {
         status: "completed",
         workflowStep: "done",
         completionReport: report,
         collectorComment,
         completedAt: formatTimeNow(),
-        date: "Today",
-        time: formatTimeNow(),
-      };
-      applyAndSync(id, patch); // saves localStorage synchronously before caller navigates
+      });
+      refresh().catch(() => undefined);
     },
-    [applyAndSync],
+    [patchOverlay, refresh],
   );
 
   const value = useMemo(
@@ -239,6 +342,9 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
       advanceWorkflow,
       completeRequest,
       getRequestById,
+      loadRequestDetail,
+      actionError,
+      clearActionError,
     }),
     [
       requests,
@@ -248,6 +354,9 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
       advanceWorkflow,
       completeRequest,
       getRequestById,
+      loadRequestDetail,
+      actionError,
+      clearActionError,
     ],
   );
 

@@ -28,6 +28,10 @@ export interface CompletionReport {
 
 export interface LabRequest {
   id: number;
+  /** Raw backend id (prescription and checkup ids can collide). */
+  apiId: number;
+  /** Which backend entity this request belongs to. */
+  requestType: "prescription" | "checkup";
   title: string;
   date: string;
   time: string;

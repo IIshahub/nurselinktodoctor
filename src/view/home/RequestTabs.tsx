@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import Toast from "@/src/components/Toast";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
 import type { RequestStatus } from "@/src/types/requests";
 import CompletedRequestCard from "./CompletedRequestCard";
@@ -13,8 +14,10 @@ const tabs: RequestStatus[] = ["new", "approved", "inProgress", "completed"];
 
 export default function RequestTabs() {
   const t = useTranslations();
-  const { requests, advanceWorkflow, isLoading } = useRequests();
+  const { requests, advanceWorkflow, isLoading, actionError, clearActionError } =
+    useRequests();
   const [activeTab, setActiveTab] = useState<RequestStatus>("new");
+  const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   useEffect(() => {
     try {
       const stored = sessionStorage.getItem(TAB_STORAGE_KEY) as RequestStatus | null;
@@ -48,14 +51,33 @@ export default function RequestTabs() {
     (activeTab === "approved" || activeTab === "inProgress" || activeTab === "completed");
 
   const handleWorkflowAction = async (requestId: number) => {
-    await advanceWorkflow(requestId);
-    setActiveTab("inProgress");
+    setActionLoadingId(requestId);
+    try {
+      await advanceWorkflow(requestId);
+      setActiveTab("inProgress");
+    } catch {
+      // actionError is set in context; toast renders below.
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const runWorkflowAction = (requestId: number) => {
+    if (actionLoadingId !== null) return;
+    void handleWorkflowAction(requestId);
   };
 
   const showLoader = isLoading && filtered.length === 0 && activeTab !== "new";
 
   return (
     <section className="mt-6 px-4">
+      {actionError && (
+        <Toast
+          message={actionError}
+          type="error"
+          onClose={clearActionError}
+        />
+      )}
       {showStepper && stepperRequest?.workflowStep && (
         <ProgressStepper
           currentStep={stepperRequest.workflowStep}
@@ -99,11 +121,12 @@ export default function RequestTabs() {
                 request={request}
                 onAction={() => {
                   if (request.workflowStep === "start") {
-                    void handleWorkflowAction(request.id);
+                    runWorkflowAction(request.id);
                     return;
                   }
-                  void advanceWorkflow(request.id);
+                  runWorkflowAction(request.id);
                 }}
+                disabled={actionLoadingId === request.id}
               />
             );
           })
