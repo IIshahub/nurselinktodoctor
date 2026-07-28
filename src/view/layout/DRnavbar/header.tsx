@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, Pen } from "@/src/components/icon";
 import LocaleSwitcher from "@/src/components/localeswitcher";
 import Image from "next/image";
+import { API_BASE } from "@/src/lib/api";
 import useLabConfig from "@/src/view/home/dashboardItem";
 import HamburgerMenu from "./HamburgerMenu";
 import ThemeToggle from "@/src/components/ThemeToggle";
@@ -40,7 +41,7 @@ export default function Header() {
         }
 
         const response = await fetch(
-          "/api/doctor-settings/hamburger-menu/get-settings",
+          `${API_BASE}/doctor-settings/hamburger-menu/get-settings`,
           {
             method: "GET",
             headers,
@@ -97,11 +98,9 @@ export default function Header() {
       }
 
       const apiByKey = {
-        online: "/api/doctor-settings/hamburger-menu/setting-is-online",
-        urgent:
-          "/api/doctor-settings/hamburger-menu/setting-emergency-reservation",
-        notifications:
-          "/api/doctor-settings/hamburger-menu/setting-notification",
+        online: `${API_BASE}/doctor-settings/hamburger-menu/setting-is-online`,
+        urgent: `${API_BASE}/doctor-settings/hamburger-menu/setting-emergency-reservation`,
+        notifications: `${API_BASE}/doctor-settings/hamburger-menu/setting-notification`,
       } as const;
 
       const response = await fetch(apiByKey[key], {
