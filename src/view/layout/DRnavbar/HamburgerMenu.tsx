@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useLocale } from "next-intl";
 import { Arrow } from "@/src/components/icon";
+import { API_BASE } from "@/src/lib/api";
 import ProfileSection from "./ProfileSection";
 import ToggleItems from "./ToggleItems";
 import MenuItems from "./MenuItems";
@@ -57,7 +58,7 @@ export default function HamburgerMenu({
         return;
       }
 
-      const response = await fetch("/api/auth/logout", {
+      const response = await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
