@@ -5,9 +5,10 @@ import type {
   WorkflowStep,
 } from "@/src/types/requests";
 
-// Same-origin `/backend` proxy (see next.config.ts) so HTTPS pages never
-// hit a plain-http API URL (avoids blocked:mixed-content in production).
-export const API_BASE = "/backend";
+// Direct browser calls to the API host (visible in DevTools Network).
+export const API_BASE = (
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "https://apilab.linktodoctor.app/api"
+).replace(/\/$/, "");
 
 export type ApiRequestType = "prescription" | "checkup";
 
