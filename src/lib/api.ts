@@ -5,10 +5,9 @@ import type {
   WorkflowStep,
 } from "@/src/types/requests";
 
-// Browser calls the backend URL from env so DevTools Network shows the real host.
-export const API_BASE = `${(
-  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "http://95.38.137.230:8082"
-).replace(/\/$/, "")}/api`;
+// Same-origin `/backend` proxy (see next.config.ts) so HTTPS pages never
+// hit a plain-http API URL (avoids blocked:mixed-content in production).
+export const API_BASE = "/backend";
 
 export type ApiRequestType = "prescription" | "checkup";
 
