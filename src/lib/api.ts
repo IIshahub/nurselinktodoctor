@@ -5,9 +5,10 @@ import type {
   WorkflowStep,
 } from "@/src/types/requests";
 
-// All calls go through the Next rewrite proxy (`/backend/*` →
-// `http://95.38.137.230:8082/api/*`, see next.config.ts) to avoid CORS.
-const API_BASE = "/backend";
+// Direct browser calls to the API host (visible in DevTools Network).
+export const API_BASE = (
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "https://apilab.linktodoctor.app/api"
+).replace(/\/$/, "");
 
 export type ApiRequestType = "prescription" | "checkup";
 

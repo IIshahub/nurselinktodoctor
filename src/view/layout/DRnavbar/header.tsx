@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Bell, Menu, Pen } from "@/src/components/icon";
+import { API_BASE } from "@/src/lib/api";
 import useLabConfig from "@/src/view/home/dashboardItem";
 import { useRequests } from "@/src/contexts/RequestsContext";
 import HamburgerMenu from "./HamburgerMenu";
@@ -44,8 +45,11 @@ export default function Header() {
         if (token) headers.authorization = `Bearer ${token}`;
 
         const response = await fetch(
-          "/api/doctor-settings/hamburger-menu/get-settings",
-          { method: "GET", headers },
+          `${API_BASE}/doctor-settings/hamburger-menu/get-settings`,
+          {
+            method: "GET",
+            headers,
+          },
         );
 
         if (response.ok) {
@@ -90,11 +94,9 @@ export default function Header() {
       if (token) headers.authorization = `Bearer ${token}`;
 
       const apiByKey = {
-        online: "/api/doctor-settings/hamburger-menu/setting-is-online",
-        urgent:
-          "/api/doctor-settings/hamburger-menu/setting-emergency-reservation",
-        notifications:
-          "/api/doctor-settings/hamburger-menu/setting-notification",
+        online: `${API_BASE}/doctor-settings/hamburger-menu/setting-is-online`,
+        urgent: `${API_BASE}/doctor-settings/hamburger-menu/setting-emergency-reservation`,
+        notifications: `${API_BASE}/doctor-settings/hamburger-menu/setting-notification`,
       } as const;
 
       const response = await fetch(apiByKey[key], {

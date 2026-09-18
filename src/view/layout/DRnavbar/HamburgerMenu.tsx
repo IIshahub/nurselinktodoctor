@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Arrow, Moon, Sun } from "@/src/components/icon";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import LocaleSwitcher from "@/src/components/localeswitcher";
+import { API_BASE } from "@/src/lib/api";
 import ProfileSection from "./ProfileSection";
 import ToggleItems from "./ToggleItems";
 import ActionMenuItems, { ProfileMenuItems } from "./MenuItems";
@@ -100,7 +101,7 @@ export default function HamburgerMenu({
         return;
       }
 
-      const response = await fetch("/api/auth/logout", {
+      const response = await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
