@@ -1,5 +1,6 @@
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
+import { iranSansX } from "@/src/lib/fonts/iran-sans-x";
 import ClientWrapper from "./clientwrapper";
 
 export default async function LayoutView({
@@ -12,7 +13,12 @@ export default async function LayoutView({
   const isRTL = locale === "fa" || locale === "ar";
 
   return (
-    <html lang={locale} dir={isRTL ? "rtl" : "ltr"} suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={isRTL ? "rtl" : "ltr"}
+      className={iranSansX.variable}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -31,7 +37,10 @@ export default async function LayoutView({
           }}
         />
       </head>
-      <body className="antialiased">
+      <body
+        className={isRTL ? `${iranSansX.className} antialiased` : "antialiased"}
+        suppressHydrationWarning
+      >
         <NextIntlClientProvider messages={messages}>
           <ClientWrapper>{children}</ClientWrapper>
         </NextIntlClientProvider>

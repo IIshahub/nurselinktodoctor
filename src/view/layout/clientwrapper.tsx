@@ -13,11 +13,13 @@ export default function ClientWrapper({
   return (
     <ThemeProvider>
       <RequestsProvider>
-        <Header />
-        <main className="relative z-10 mx-auto w-full max-w-md bg-background pt-[105px] pb-24">
-          {children}
-        </main>
-        <Navbar />
+        <div className="app-shell">
+          <Header />
+          <main className="relative z-10 overflow-x-hidden pt-[var(--app-header-offset)] pb-[var(--app-bottom-offset)]">
+            {children}
+          </main>
+          <Navbar />
+        </div>
       </RequestsProvider>
     </ThemeProvider>
   );

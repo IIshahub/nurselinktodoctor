@@ -59,14 +59,30 @@
   "voiceReportMock": "نمونه با موفقیت جمع‌آوری شد. بیمار در طول نمونه‌گیری همکاری کرد.",
   "submitForm": "ثبت فرم",
   "submitFailed": "ثبت انجام نشد. دوباره تلاش کنید.",
+  "detailLoadFailed": "جزئیات درخواست بارگذاری نشد.",
+  "detailPartialWarning": "جزئیات کامل از سرور دریافت نشد؛ اطلاعات پایه نمایش داده شده است.",
   "cancel": "انصراف",
   "sampleCollectorComment": "نظر نمونه‌گیر :",
+  "personal_info": "اطلاعات شخصی",
   "settings": {
     "onlineMode": "حالت آنلاین",
     "onlineModeDesc": "نمایش وضعیت آنلاین به بیماران",
     "urgentBooking": "رزرو فوری",
     "urgentBookingDesc": "پذیرش رزروهای اضطراری",
     "receiveNotifications": "اعلان‌ها",
-    "receiveNotificationsDesc": "دریافت اعلان‌های push"
+    "receiveNotificationsDesc": "دریافت اعلان‌های push",
+    "homeGreeting": "سلام {name}",
+    "homeNewRequests": "شما {count} درخواست جدید در انتظار بررسی دارید",
+    "myProfile": "پروفایل من",
+    "professionalProfile": "پروفایل حرفه‌ای",
+    "logoutConfirmTitle": "خروج",
+    "logoutConfirmMessage": "آیا مطمئن هستید که می‌خواهید خارج شوید؟",
+    "logoutCancel": "انصراف",
+    "logoutConfirmYes": "بله، خروج",
+    "homeQuickActions": "دسترسی سریع",
+    "homeQuickActionCaseSummary": "خلاصه پرونده",
+    "homeQuickActionRollcall": "حضور و غیاب",
+    "homeQuickActionSchedule": "زمان‌بندی",
+    "homeQuickActionPreviousPatients": "بیماران قبلی"
   }
 }

@@ -59,14 +59,30 @@
   "voiceReportMock": "Sample collected successfully. Patient was cooperative during venipuncture.",
   "submitForm": "Submit Form",
   "submitFailed": "Could not submit. Please try again.",
+  "detailLoadFailed": "تعذر تحميل تفاصيل الطلب.",
+  "detailPartialWarning": "لم يتم استلام التفاصيل الكاملة من الخادم؛ يتم عرض المعلومات الأساسية.",
   "cancel": "Cancel",
   "sampleCollectorComment": "Sample Collector Comment :",
+  "personal_info": "المعلومات الشخصية",
   "settings": {
     "onlineMode": "الحالة المتصلة",
     "onlineModeDesc": "إظهار حالتك المتصلة للمرضى",
     "urgentBooking": "الحجز العاجل",
     "urgentBookingDesc": "قبول الحجوزات الطارئة",
     "receiveNotifications": "الإشعارات",
-    "receiveNotificationsDesc": "استلام إشعارات push"
+    "receiveNotificationsDesc": "استلام إشعارات push",
+    "homeGreeting": "مرحباً {name}",
+    "homeNewRequests": "لديك {count} طلبات جديدة بانتظار المراجعة",
+    "myProfile": "ملفي الشخصي",
+    "professionalProfile": "الملف المهني",
+    "logoutConfirmTitle": "تسجيل الخروج",
+    "logoutConfirmMessage": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+    "logoutCancel": "إلغاء",
+    "logoutConfirmYes": "نعم، تسجيل الخروج",
+    "homeQuickActions": "إجراءات سريعة",
+    "homeQuickActionCaseSummary": "ملخص الحالة",
+    "homeQuickActionRollcall": "الحضور والغياب",
+    "homeQuickActionSchedule": "الجدولة",
+    "homeQuickActionPreviousPatients": "المرضى السابقون"
   }
 }

@@ -63,8 +63,8 @@ export default function RequestTabs() {
   };
 
   const runWorkflowAction = (requestId: number) => {
-    if (actionLoadingId !== null) return;
-    void handleWorkflowAction(requestId);
+    if (actionLoadingId !== null) return Promise.resolve();
+    return handleWorkflowAction(requestId);
   };
 
   const showLoader = isLoading && filtered.length === 0 && activeTab !== "new";
@@ -108,24 +108,26 @@ export default function RequestTabs() {
             <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : filtered.length > 0 ? (
-          filtered.map((request) => {
+          filtered.map((request, index) => {
+            const showHint = index === 0;
             if (activeTab === "new") {
-              return <SwipeRequestCard key={request.id} request={request} />;
+              return (
+                <SwipeRequestCard
+                  key={`${activeTab}-${request.id}`}
+                  request={request}
+                  showHint={showHint}
+                />
+              );
             }
             if (activeTab === "completed") {
               return <CompletedRequestCard key={request.id} request={request} />;
             }
             return (
               <WorkflowRequestCard
-                key={request.id}
+                key={`${activeTab}-${request.id}`}
                 request={request}
-                onAction={() => {
-                  if (request.workflowStep === "start") {
-                    runWorkflowAction(request.id);
-                    return;
-                  }
-                  runWorkflowAction(request.id);
-                }}
+                showHint={showHint}
+                onAction={() => runWorkflowAction(request.id)}
                 disabled={actionLoadingId === request.id}
               />
             );

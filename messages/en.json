@@ -59,14 +59,30 @@
   "voiceReportMock": "Sample collected successfully. Patient was cooperative during venipuncture.",
   "submitForm": "Submit Form",
   "submitFailed": "Could not submit. Please try again.",
+  "detailLoadFailed": "Could not load request details.",
+  "detailPartialWarning": "Full details were unavailable from the server; basic info is shown.",
   "cancel": "Cancel",
   "sampleCollectorComment": "Sample Collector Comment :",
+  "personal_info": "Personal Information",
   "settings": {
     "onlineMode": "Online Mode",
     "onlineModeDesc": "Show your online status to patients",
     "urgentBooking": "Urgent Booking",
     "urgentBookingDesc": "Accept emergency reservations",
     "receiveNotifications": "Notifications",
-    "receiveNotificationsDesc": "Receive push notifications"
+    "receiveNotificationsDesc": "Receive push notifications",
+    "homeGreeting": "Hi, {name}",
+    "homeNewRequests": "You have {count} new requests waiting for review",
+    "myProfile": "My Profile",
+    "professionalProfile": "Professional Profile",
+    "logoutConfirmTitle": "Logout",
+    "logoutConfirmMessage": "Are you sure you want to log out?",
+    "logoutCancel": "Cancel",
+    "logoutConfirmYes": "Yes, Logout",
+    "homeQuickActions": "Quick Actions",
+    "homeQuickActionCaseSummary": "Case Summary",
+    "homeQuickActionRollcall": "Rollcall",
+    "homeQuickActionSchedule": "Schedule",
+    "homeQuickActionPreviousPatients": "Previous Patients"
   }
 }

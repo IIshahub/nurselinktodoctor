@@ -1,6 +1,9 @@
 "use client";
+
 import React from "react";
-import { Pen } from "@/src/components/icon";
+import Link from "next/link";
+import Image from "next/image";
+import { Camera } from "@/src/components/icon";
 
 interface ProfileSectionProps {
   image: string;
@@ -9,19 +12,27 @@ interface ProfileSectionProps {
 
 export default function ProfileSection({ image, name }: ProfileSectionProps) {
   return (
-    <div className="flex flex-col items-center py-8 -mt-20 ">
-      <div className="relative w-[100px] h-24 mb-4">
-        <div
-          className="w-full h-full rounded-full bg-cover bg-no-repeat bg-center"
-          style={{ backgroundImage: `url(${image})` }}
+    <div className="flex flex-col items-center px-6 pb-2 pt-2">
+      <div className="relative mb-4 h-[110px] w-[110px]">
+        <Image
+          src={image}
+          alt=""
+          width={110}
+          height={110}
+          className="h-[110px] w-[110px] rounded-full object-cover"
+          priority
         />
-        <div className="absolute bottom-0 right-0 w-[32px] h-[32px] bg-primary rounded-full flex items-center justify-center">
-          <Pen className="w-5 h-5" color="white" />
-        </div>
+        <Link
+          href="/profile"
+          className="absolute bottom-0 left-1/2 flex h-8 w-8 -translate-x-1/2 translate-y-1 items-center justify-center rounded-full bg-[#0D50FF] shadow-sm transition-transform active:scale-95"
+          aria-label="Edit profile photo"
+        >
+          <Camera color="white" size={16} />
+        </Link>
       </div>
-      <div className="text-black dark:text-white text-lg font-semibold">
+      <h2 className="text-center text-[20px] font-bold leading-6 text-[#0F172A] dark:text-white">
         {name}
-      </div>
+      </h2>
     </div>
   );
 }

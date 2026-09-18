@@ -220,7 +220,10 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
         patchOverlay(id, patch);
         return result.detail;
       } catch (error) {
-        console.error("[requests] failed to load detail", error);
+        console.warn(
+          "[requests] failed to load detail",
+          error instanceof Error ? error.message : error,
+        );
         return current.detail ?? null;
       }
     },

@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Arrow, Phone } from "@/src/components/icon";
-import { Microscope } from "@/src/components/icon";
+import { Arrow, Phone, Microscope } from "@/src/components/icon";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
 import type { LabRequest, LabRequestDetail } from "@/src/types/requests";
 
@@ -16,15 +15,32 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
   const t = useTranslations();
   const router = useRouter();
   const { approveRequest, ignoreRequest, loadRequestDetail } = useRequests();
-  const [detail, setDetail] = useState<LabRequestDetail | null>(
-    request.detail ?? null,
+  const [detail, setDetail] = useState<LabRequestDetail>(
+    request.detail ?? {
+      patientName: "—",
+      phone: "",
+      gender: "—",
+      age: 0,
+      tests: "—",
+      scheduledDate: request.date,
+      scheduledTime: request.time,
+      requestDate: request.date,
+      requestTime: request.time,
+      diseases: [],
+      outlinedDiseases: [],
+      patientComment: "",
+      supervisorComment: "",
+      address: request.address,
+      mapQuery: request.address,
+    },
   );
-  const [loadingDetail, setLoadingDetail] = useState(!request.detail?.patientName || request.detail.patientName === "—");
+  const [loadingDetail, setLoadingDetail] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setLoadingDetail(true);
+
     loadRequestDetail(request.id)
       .then((loaded) => {
         if (!cancelled && loaded) setDetail(loaded);
@@ -32,6 +48,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       .finally(() => {
         if (!cancelled) setLoadingDetail(false);
       });
+
     return () => {
       cancelled = true;
     };
@@ -40,9 +57,11 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
   }, [request.id]);
 
   const handleAccept = async () => {
-    if (!detail || submitting) return;
+    if (submitting) return;
     setSubmitting(true);
     try {
+      // Next stage after swipe: approve API then move to "approved" tab
+      // (see Scalar: approve-new-prescription-lab-request / approve-new-Checkup-lab-request)
       await approveRequest(request.id, detail);
       sessionStorage.setItem(TAB_STORAGE_KEY, "approved");
       router.replace("/");
@@ -59,51 +78,42 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
   };
 
   const openMaps = () => {
-    if (!detail) return;
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detail.mapQuery)}`,
       "_blank",
     );
   };
 
-  if (loadingDetail && !detail) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!detail) {
-    return (
-      <div className="rounded-2xl border border-border bg-card py-10 text-center text-sm text-text/50">
-        {t("noRequests")}
-      </div>
-    );
-  }
-
   const phoneHref = detail.phone ? `tel:${detail.phone}` : undefined;
 
   return (
-    <div className="pb-8">
+    <div className="relative mx-auto w-full max-w-full overflow-x-hidden px-4 pt-3 pb-8">
+      {loadingDetail && (
+        <div className="absolute end-4 top-3 z-10 flex items-center gap-2 rounded-full bg-white/90 px-2.5 py-1 text-[11px] text-primary shadow-sm dark:bg-[#2a2a3a]/90">
+          <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      )}
+
       <button
         type="button"
         onClick={() => router.back()}
-        className="mb-4 flex items-center gap-1 text-sm font-semibold text-primary"
+        className="mb-5 mt-2 flex items-center gap-1 text-sm font-semibold text-primary"
       >
-        <Arrow className="h-4 w-4 rotate-90" color="#0D50FF" />
+        <Arrow className="h-4 w-4 shrink-0 rotate-90" color="#0D50FF" />
         {t("back")}
       </button>
 
       <SectionTitle>{t("requestDetails")}</SectionTitle>
       <Card>
-        <p className="text-base font-bold text-primary">{detail.patientName}</p>
+        <p className="break-words text-base font-bold text-primary">
+          {detail.patientName}
+        </p>
         {phoneHref ? (
           <a
             href={phoneHref}
-            className="mt-2 inline-flex items-center gap-2 text-sm text-teal underline"
+            className="mt-2 inline-flex max-w-full items-center gap-2 break-all text-sm text-teal underline"
           >
-            <Phone className="h-4 w-4" color="#00BBD3" />
+            <Phone className="h-4 w-4 shrink-0" color="#00BBD3" />
             {detail.phone}
           </a>
         ) : (
@@ -117,13 +127,15 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
 
       <SectionTitle>{t("requestedTests")}</SectionTitle>
       <Card>
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10">
             <Microscope className="h-5 w-5" color="#00BBD3" />
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-text">{request.title}</p>
-            <p className="mt-1 text-xs text-text/60">{detail.tests}</p>
+          <div className="min-w-0 flex-1">
+            <p className="break-words text-sm font-bold text-text">
+              {request.title}
+            </p>
+            <p className="mt-1 break-words text-xs text-text/60">{detail.tests}</p>
             <p className="mt-2 text-xs text-text/50">
               {detail.scheduledDate} - {detail.scheduledTime}
             </p>
@@ -133,7 +145,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
 
       <SectionTitle>{t("requestTime")}</SectionTitle>
       <Card>
-        <div className="flex items-center justify-between text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
           <span className="text-text/70">{detail.requestDate} •</span>
           <span className="font-semibold text-text">{detail.requestTime}</span>
         </div>
@@ -145,7 +157,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
           detail.diseases.map((disease) => (
             <span
               key={disease}
-              className="rounded-full bg-teal/15 px-3 py-1 text-xs font-medium text-text"
+              className="max-w-full break-words rounded-full bg-teal/15 px-3 py-1 text-xs font-medium text-text"
             >
               {disease}
             </span>
@@ -156,7 +168,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         {detail.outlinedDiseases.map((disease) => (
           <span
             key={disease}
-            className="rounded-full border border-text px-3 py-1 text-xs font-medium uppercase text-text"
+            className="max-w-full break-words rounded-full border border-text px-3 py-1 text-xs font-medium uppercase text-text"
           >
             {disease}
           </span>
@@ -167,7 +179,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            className="h-10 rounded-xl border border-border bg-card"
+            className="h-10 min-w-0 rounded-xl border border-border bg-card"
           />
         ))}
       </div>
@@ -175,7 +187,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       <SectionTitle className="mt-5">{t("patientComment")}</SectionTitle>
       <Card className="border-2 border-teal">
         <p className="text-sm font-semibold text-text">{t("patientComment")}</p>
-        <p className="mt-2 text-xs text-text/50">
+        <p className="mt-2 break-words text-xs text-text/50">
           {detail.patientComment || "—"}
         </p>
       </Card>
@@ -183,13 +195,13 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       <SectionTitle className="mt-5">{t("supervisorComment")}</SectionTitle>
       <Card className="border-2 border-red-500">
         <p className="text-sm font-bold text-text">{t("supervisorComment")}</p>
-        <p className="mt-2 text-sm text-red-500">
+        <p className="mt-2 break-words text-sm text-red-500">
           {detail.supervisorComment || "—"}
         </p>
       </Card>
 
       <SectionTitle className="mt-5">{t("address")}</SectionTitle>
-      <p className="mb-3 text-sm font-bold text-text">
+      <p className="mb-3 break-words text-sm font-bold leading-6 text-text">
         {t("address")}: {detail.address}
       </p>
 
@@ -214,14 +226,21 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         {t("openInMaps")}
       </button>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 pb-4">
         <button
           type="button"
           onClick={handleAccept}
-          disabled={submitting || loadingDetail}
+          disabled={submitting}
           className="rounded-2xl bg-primary py-3 text-sm font-bold text-white transition hover:bg-primary/90 disabled:opacity-60"
         >
-          {t("accept")}
+          {submitting ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              {t("accept")}
+            </span>
+          ) : (
+            t("accept")
+          )}
         </button>
         <button
           type="button"
@@ -259,7 +278,7 @@ function Card({
 }) {
   return (
     <div
-      className={`mb-4 rounded-2xl border border-border bg-card p-4 shadow-sm ${className}`}
+      className={`mb-4 min-w-0 overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm ${className}`}
     >
       {children}
     </div>

@@ -26,6 +26,10 @@ export {
   AllHourSupport,
   Sun,
   Moon,
+  Camera,
+  ChevronRight,
+  PersonalInformation,
+  ProfessionalInformation,
 } from "./icon";
 
 export { CheckMark } from "./ui-icons";

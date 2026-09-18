@@ -69,25 +69,29 @@ export default function CompleteFormView({ request }: CompleteFormViewProps) {
   };
 
   return (
-    <div className="pb-8">
+    <div className="relative mx-auto w-full max-w-full overflow-x-hidden px-4 pt-3 pb-8">
       <button
         type="button"
         onClick={() => router.back()}
-        className="mb-4 flex items-center gap-1 text-sm font-semibold text-primary"
+        className="mb-5 mt-2 flex items-center gap-1 text-sm font-semibold text-primary"
       >
-        <Arrow className="h-4 w-4 rotate-90" color="#0D50FF" />
+        <Arrow className="h-4 w-4 shrink-0 rotate-90" color="#0D50FF" />
         {t("back")}
       </button>
 
-      <h1 className="mb-4 text-base font-bold text-text">{t("completeFormTitle")}</h1>
+      <h1 className="mb-4 break-words text-base font-bold text-text">
+        {t("completeFormTitle")}
+      </h1>
 
-      <div className="rounded-2xl border-2 border-primary/20 bg-card p-4 shadow-sm">
+      <div className="min-w-0 overflow-hidden rounded-2xl border-2 border-primary/20 bg-card p-4 shadow-sm">
         <div className="mb-3 flex items-start justify-between gap-3">
-          <p className="text-sm text-text/40">{t("serviceReportPlaceholder")}</p>
+          <p className="min-w-0 flex-1 break-words text-sm text-text/40">
+            {t("serviceReportPlaceholder")}
+          </p>
           <button
             type="button"
             onClick={toggleRecording}
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${
               isRecording ? "bg-red-500" : "bg-primary"
             }`}
             aria-label={t("recordVoice")}
@@ -100,23 +104,27 @@ export default function CompleteFormView({ request }: CompleteFormViewProps) {
           value={reportText}
           onChange={(event) => setReportText(event.target.value)}
           placeholder={t("serviceReportPlaceholder")}
-          className="min-h-[120px] w-full resize-none bg-transparent text-sm text-text outline-none"
+          className="min-h-[140px] w-full max-w-full resize-none bg-transparent text-sm leading-6 text-text outline-none"
         />
 
         {(isRecording || voiceNote) && (
-          <div className="mt-4 flex items-end justify-center gap-1 py-4">
+          <div className="mt-4 flex items-end justify-center gap-1 overflow-hidden py-4">
             {isRecording ? (
               <div className="flex animate-pulse items-end gap-1">{waveform}</div>
             ) : (
-              <p className="text-center text-xs text-teal">{voiceNote}</p>
+              <p className="break-words px-1 text-center text-xs text-teal">
+                {voiceNote}
+              </p>
             )}
           </div>
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 pb-4">
         {submitError && (
-          <p className="col-span-2 text-center text-sm text-red-500">{submitError}</p>
+          <p className="col-span-2 break-words text-center text-sm text-red-500">
+            {submitError}
+          </p>
         )}
         <button
           type="button"
@@ -124,12 +132,20 @@ export default function CompleteFormView({ request }: CompleteFormViewProps) {
           onClick={handleSubmit}
           className="rounded-2xl bg-primary py-3 text-sm font-bold text-white transition hover:bg-primary/90 disabled:opacity-50"
         >
-          {t("submitForm")}
+          {isSubmitting ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              {t("submitForm")}
+            </span>
+          ) : (
+            t("submitForm")
+          )}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
-          className="rounded-2xl border-2 border-primary py-3 text-sm font-bold text-primary transition hover:bg-primary/5"
+          disabled={isSubmitting}
+          className="rounded-2xl border-2 border-primary py-3 text-sm font-bold text-primary transition hover:bg-primary/5 disabled:opacity-50"
         >
           {t("cancel")}
         </button>
