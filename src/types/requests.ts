@@ -18,6 +18,10 @@ export interface LabRequestDetail {
   supervisorComment: string;
   address: string;
   mapQuery: string;
+  /** WGS84 latitude when available from backend */
+  lat?: number;
+  /** WGS84 longitude when available from backend */
+  lng?: number;
 }
 
 export interface CompletionReport {

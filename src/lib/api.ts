@@ -130,6 +130,16 @@ function buildMapQuery(coordinate: ApiCoordinate, address: string): string {
   return address;
 }
 
+function pickCoords(
+  coordinate: ApiCoordinate | undefined,
+): { lat: number; lng: number } | undefined {
+  if (!coordinate) return undefined;
+  const { lat, long } = coordinate;
+  if (lat === 0 && long === 0) return undefined;
+  if (!Number.isFinite(lat) || !Number.isFinite(long)) return undefined;
+  return { lat, lng: long };
+}
+
 function mapGender(gender: number | null | undefined): string {
   if (gender === 0) return "Male";
   if (gender === 1) return "Female";
@@ -200,6 +210,7 @@ function mapDetailPayload(data: ApiRequestDetail): LabRequestDetail {
     supervisorComment: "",
     address,
     mapQuery: buildMapQuery(data.coordinate, address),
+    ...pickCoords(data.coordinate),
   };
 }
 
@@ -225,6 +236,7 @@ function buildListDetail(
     supervisorComment: "",
     address,
     mapQuery: buildMapQuery(item.coordinate, address),
+    ...pickCoords(item.coordinate),
   };
 }
 

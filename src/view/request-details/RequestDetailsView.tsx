@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Arrow, Phone, Microscope } from "@/src/components/icon";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
 import type { LabRequest, LabRequestDetail } from "@/src/types/requests";
+import AddressMapPreview from "./AddressMapPreview";
 
 interface RequestDetailsViewProps {
   request: LabRequest;
@@ -36,6 +37,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
   );
   const [loadingDetail, setLoadingDetail] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,11 +79,46 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
     router.replace("/");
   };
 
-  const openMaps = () => {
+  const resolveCoords = (): { lat: number; lng: number } | null => {
+    if (
+      typeof detail.lat === "number" &&
+      typeof detail.lng === "number" &&
+      Number.isFinite(detail.lat) &&
+      Number.isFinite(detail.lng) &&
+      !(detail.lat === 0 && detail.lng === 0)
+    ) {
+      return { lat: detail.lat, lng: detail.lng };
+    }
+    const match = detail.mapQuery
+      .trim()
+      .match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+    if (!match) return null;
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    if (lat === 0 && lng === 0) return null;
+    return { lat, lng };
+  };
+
+  const openMapPicker = () => setShowMapPicker(true);
+
+  const openInGoogleMaps = () => {
+    setShowMapPicker(false);
     window.open(
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detail.mapQuery)}`,
       "_blank",
     );
+  };
+
+  const openInNeshan = () => {
+    setShowMapPicker(false);
+    const coords = resolveCoords();
+    // Official Neshan deep link — places a pin at lat/lng (web + app)
+    // https://platform.neshan.org/FAQ/
+    const url = coords
+      ? `https://nshn.ir/?lat=${coords.lat}&lng=${coords.lng}`
+      : `https://nshn.ir/?q=${encodeURIComponent(detail.address || detail.mapQuery)}`;
+    window.open(url, "_blank");
   };
 
   const phoneHref = detail.phone ? `tel:${detail.phone}` : undefined;
@@ -205,26 +242,66 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         {t("address")}: {detail.address}
       </p>
 
-      <div className="overflow-hidden rounded-2xl border-2 border-teal/30">
-        <div className="relative h-40 bg-gradient-to-br from-teal/10 via-blue-50 to-teal/20">
-          <div className="absolute inset-0 opacity-30">
-            <div className="grid h-full w-full grid-cols-6 grid-rows-4 gap-px bg-teal/20">
-              {Array.from({ length: 24 }).map((_, index) => (
-                <div key={index} className="bg-white/40" />
-              ))}
-            </div>
-          </div>
-          <div className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500 ring-2 ring-white" />
-        </div>
-      </div>
+      <AddressMapPreview
+        mapQuery={detail.mapQuery}
+        lat={detail.lat}
+        lng={detail.lng}
+        onOpenMaps={openMapPicker}
+      />
 
       <button
         type="button"
-        onClick={openMaps}
+        onClick={openMapPicker}
         className="mt-3 w-full rounded-2xl border-2 border-teal py-3 text-sm font-semibold text-teal transition hover:bg-teal/5"
       >
         {t("openInMaps")}
       </button>
+
+      {showMapPicker && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 px-4 pb-8 backdrop-blur-[1px] sm:items-center sm:pb-0"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="map-picker-title"
+          onClick={() => setShowMapPicker(false)}
+        >
+          <div
+            className="w-full max-w-[360px] rounded-[24px] bg-white px-5 pb-5 pt-6 shadow-xl dark:bg-[#2a2a3a]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              id="map-picker-title"
+              className="text-center text-[18px] font-bold text-[#0D50FF]"
+            >
+              {t("chooseMapApp")}
+            </h2>
+
+            <div className="mt-5 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={openInGoogleMaps}
+                className="h-12 rounded-xl bg-[#0D50FF] text-[15px] font-semibold text-white transition-opacity active:opacity-90"
+              >
+                {t("openInGoogleMaps")}
+              </button>
+              <button
+                type="button"
+                onClick={openInNeshan}
+                className="h-12 rounded-xl border-2 border-[#00A693] bg-white text-[15px] font-semibold text-[#00A693] transition-opacity active:opacity-80 dark:bg-transparent"
+              >
+                {t("openInNeshan")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMapPicker(false)}
+                className="h-11 text-[14px] font-medium text-text/60 transition-opacity active:opacity-70"
+              >
+                {t("cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 grid grid-cols-2 gap-3 pb-4">
         <button
