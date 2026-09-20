@@ -6,7 +6,7 @@ import MenuItem from "./MenuItem";
 import {
   Lock,
   Help,
-  Phone,
+  EmergencySupport,
   LogoutOutline,
   PersonalInformation,
   ProfessionalInformation,
@@ -81,7 +81,7 @@ export default function ActionMenuItems({
         showArrow
       />
       <MenuItem
-        icon={<Phone color="#0D50FF" className="h-6 w-6" />}
+        icon={<EmergencySupport color="#0D50FF" className="h-6 w-6" />}
         title={t("emergencySupport") || "Emergency Support"}
         onClick={onEmergencySupport}
         showArrow

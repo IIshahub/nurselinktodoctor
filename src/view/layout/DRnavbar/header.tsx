@@ -139,7 +139,35 @@ export default function Header() {
           </div>
 
           <div className="flex h-[49px] items-center justify-between gap-2 pb-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex shrink-0 items-center">
+              <button
+                type="button"
+                className="flex cursor-pointer items-center justify-center p-2 text-black transition-all active:scale-95 dark:text-white"
+                onClick={() => setIsMenuOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu className="h-6 w-6" color="currentColor" />
+              </button>
+              <Link
+                href="/"
+                className="flex items-center justify-center p-2 transition-opacity hover:opacity-80 active:scale-95"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" color="#0D50FF" />
+              </Link>
+            </div>
+
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-end text-[14px] font-bold leading-[17px] text-black dark:text-white">
+                  <span aria-hidden>👋 </span>
+                  {t("homeGreeting", { name: displayName })}
+                </p>
+                <p className="mt-0.5 line-clamp-2 text-end text-[11px] font-normal leading-[14px] text-[#5B8DEF]">
+                  {t("homeNewRequests", { count: pendingRequests })}
+                </p>
+              </div>
+
               <div className="relative h-[49px] w-[49px] shrink-0">
                 <Image
                   src={DoctorData.image}
@@ -156,34 +184,6 @@ export default function Header() {
                   <Pen className="h-2.5 w-2.5" color="white" />
                 </Link>
               </div>
-
-              <div className="min-w-0">
-                <p className="truncate text-[14px] font-bold leading-[17px] text-black dark:text-white">
-                  <span aria-hidden>👋 </span>
-                  {t("homeGreeting", { name: displayName })}
-                </p>
-                <p className="mt-0.5 line-clamp-2 text-[11px] font-normal leading-[14px] text-[#5B8DEF]">
-                  {t("homeNewRequests", { count: pendingRequests })}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex shrink-0 items-center">
-              <Link
-                href="/"
-                className="flex items-center justify-center p-2 transition-opacity hover:opacity-80 active:scale-95"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" color="#0D50FF" />
-              </Link>
-              <button
-                type="button"
-                className="flex cursor-pointer items-center justify-center p-2 text-black transition-all active:scale-95 dark:text-white"
-                onClick={() => setIsMenuOpen(true)}
-                aria-label="Open menu"
-              >
-                <Menu className="h-6 w-6" color="currentColor" />
-              </button>
             </div>
           </div>
         </div>

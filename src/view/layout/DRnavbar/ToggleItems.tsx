@@ -3,7 +3,7 @@
 import React from "react";
 import { useTranslations } from "next-intl";
 import ToggleItem from "./ToggleItem";
-import { Bell, AllHourSupport, OnlineMode } from "@/src/components/icon";
+import { Notifications, AllHourSupport, OnlineMode } from "@/src/components/icon";
 
 interface ToggleItemsProps {
   toggles: {
@@ -37,7 +37,7 @@ export default function ToggleItems({
     },
     {
       key: "notifications" as const,
-      icon: <Bell color="#0D50FF" className="h-6 w-6" />,
+      icon: <Notifications color="#0D50FF" className="h-6 w-6" />,
       title: t("receiveNotifications"),
     },
   ];
