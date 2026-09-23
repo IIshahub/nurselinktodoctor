@@ -5,10 +5,10 @@ import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Arrow } from "@/src/components/icon";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
-import type { LabRequest } from "@/src/types/requests";
+import type { CareRequest } from "@/src/types/requests";
 
 interface CompleteFormViewProps {
-  request: LabRequest;
+  request: CareRequest;
 }
 
 const waveformHeights = [12, 24, 18, 30, 16, 28, 14, 26, 20, 32, 18, 24];

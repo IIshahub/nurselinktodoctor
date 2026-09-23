@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckApprove, Emergency, Microscope } from "@/src/components/icon";
+import { CheckApprove, Emergency, NurseCare } from "@/src/components/icon";
 import { STEP_COLORS } from "@/src/lib/workflow";
-import type { LabRequest, WorkflowStep } from "@/src/types/requests";
+import type { CareRequest, WorkflowStep } from "@/src/types/requests";
 import SwipeableCard from "./SwipeableCard";
 
 interface WorkflowRequestCardProps {
-  request: LabRequest;
+  request: CareRequest;
   onAction: () => void | Promise<void>;
   disabled?: boolean;
   showHint?: boolean;
@@ -17,8 +17,7 @@ interface WorkflowRequestCardProps {
 const actionLabels: Record<WorkflowStep, string> = {
   start: "startAction",
   arrived: "arrivedAction",
-  left: "leftAction",
-  delivered: "deliveredAction",
+  left: "completeVisitAction",
   done: "doneAction",
 };
 
@@ -33,12 +32,12 @@ export default function WorkflowRequestCard({
   const step = request.workflowStep ?? "start";
   const actionKey = actionLabels[step];
   const actionColor = STEP_COLORS[step];
-  const label =
-    step === "delivered" ? t("deliveryAction") : t(actionKey);
+  const label = t(actionKey);
 
   const handleAction = async () => {
     if (disabled) return;
-    if (step === "delivered") {
+    // After leave, open the local completion form (API has no deliver step).
+    if (step === "left") {
       router.push(`/request/${request.id}/complete`);
       return;
     }
@@ -69,9 +68,9 @@ export default function WorkflowRequestCard({
         <div className="flex flex-1 items-start gap-3 p-3">
           <div className="relative shrink-0">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal/10">
-              <Microscope className="h-5 w-5" color="#00BBD3" />
+              <NurseCare className="h-5 w-5" color="#00BBD3" />
             </div>
-            {request.isEmergency && step === "delivered" && (
+            {request.isEmergency && step === "left" && (
               <div className="absolute -right-1 -top-1">
                 <Emergency />
               </div>
@@ -88,9 +87,11 @@ export default function WorkflowRequestCard({
             >
               {subtitle}
             </p>
-            <p className="mt-1 line-clamp-1 text-xs text-text/60">
-              {request.address}
-            </p>
+            {request.address !== "—" && (
+              <p className="mt-1 line-clamp-1 text-xs text-text/60">
+                {request.address}
+              </p>
+            )}
           </div>
         </div>
       </div>

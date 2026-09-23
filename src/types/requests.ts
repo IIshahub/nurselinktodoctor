@@ -1,13 +1,15 @@
 export type RequestStatus = "new" | "approved" | "inProgress" | "completed";
 
-export type WorkflowStep = "start" | "arrived" | "left" | "delivered" | "done";
+/** Nurse home-care workflow — API has approve / arrive / leave (no deliver). */
+export type WorkflowStep = "start" | "arrived" | "left" | "done";
 
-export interface LabRequestDetail {
+export interface CareRequestDetail {
   patientName: string;
   phone: string;
   gender: string;
   age: number;
-  tests: string;
+  /** Joined home-care service names from the API `name` array. */
+  services: string;
   scheduledDate: string;
   scheduledTime: string;
   requestDate: string;
@@ -30,12 +32,10 @@ export interface CompletionReport {
   createdAt: string;
 }
 
-export interface LabRequest {
+export interface CareRequest {
   id: number;
-  /** Raw backend id (prescription and checkup ids can collide). */
+  /** Raw backend id. */
   apiId: number;
-  /** Which backend entity this request belongs to. */
-  requestType: "prescription" | "checkup";
   title: string;
   date: string;
   time: string;
@@ -43,10 +43,10 @@ export interface LabRequest {
   isEmergency?: boolean;
   status: RequestStatus;
   workflowStep?: WorkflowStep;
-  detail?: LabRequestDetail;
+  detail?: CareRequestDetail;
   startedAt?: string;
   completedAt?: string;
-  collectorComment?: string;
+  nurseComment?: string;
   completionReport?: CompletionReport;
 }
 
@@ -54,6 +54,5 @@ export const WORKFLOW_STEPS: WorkflowStep[] = [
   "start",
   "arrived",
   "left",
-  "delivered",
   "done",
 ];

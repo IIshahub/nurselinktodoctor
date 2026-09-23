@@ -1,12 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CheckMark, Microscope } from "@/src/components/icon";
+import { CheckMark, NurseCare } from "@/src/components/icon";
 import { STEP_COLORS } from "@/src/lib/workflow";
-import type { LabRequest } from "@/src/types/requests";
+import type { CareRequest } from "@/src/types/requests";
 
 interface CompletedRequestCardProps {
-  request: LabRequest;
+  request: CareRequest;
 }
 
 export default function CompletedRequestCard({
@@ -18,7 +18,7 @@ export default function CompletedRequestCard({
     <div className="flex overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex flex-1 items-start gap-3 p-3">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal/10">
-          <Microscope className="h-5 w-5" color="#00BBD3" />
+          <NurseCare className="h-5 w-5" color="#00BBD3" />
         </div>
 
         <div className="min-w-0 flex-1">

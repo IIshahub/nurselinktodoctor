@@ -1,16 +1,15 @@
 import type {
-  LabRequest,
-  LabRequestDetail,
+  CareRequest,
+  CareRequestDetail,
   RequestStatus,
   WorkflowStep,
 } from "@/src/types/requests";
 
-// Direct browser calls to the API host (visible in DevTools Network).
+// Same-origin /backend/* is rewritten by next.config to the nurse API
+// (avoids browser CORS). Override with NEXT_PUBLIC_BACKEND_API_URL if needed.
 export const API_BASE = (
-  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "https://apilab.linktodoctor.app/api"
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "/backend"
 ).replace(/\/$/, "");
-
-export type ApiRequestType = "prescription" | "checkup";
 
 interface ApiEnvelope<T> {
   isSuccess: boolean;
@@ -20,76 +19,22 @@ interface ApiEnvelope<T> {
   data: T;
 }
 
-interface ApiAddressData {
-  title: string | null;
-  street: string | null;
-  city: string | null;
-  postalCode: string | null;
-  number: string | null;
-  floor: string | null;
-  unit: string | null;
-}
-
-interface ApiCoordinate {
-  lat: number;
-  long: number;
-}
-
-interface ApiSampleRequest {
+interface ApiHomeTreatmentItem {
   id: number;
-  dateTime: string;
-  coordinate: ApiCoordinate;
-  addressData: ApiAddressData;
+  name: string[] | null;
+  reservationDate: string;
+  reservationStatus: number;
+  arrivalStatue: number;
 }
 
-interface ApiSampleLists {
-  prescriptionLabQueries: ApiSampleRequest[];
-  checkupReservationQueries: ApiSampleRequest[];
-}
-
-interface ApiPatient {
-  fullName: string | null;
-  age: number | null;
-  gender: number | null;
-  email: string | null;
-  phoneNumber: string | null;
-}
-
-interface ApiDisease {
-  id: number;
-  name: string;
-}
-
-interface ApiTestItem {
-  id?: number;
-  name?: string;
-  title?: string;
-}
-
-interface ApiRequestDetail {
-  id: number;
-  phoneNumber?: string | number | null;
-  nationalCode?: string | null;
-  referralTime: string;
-  coordinate: ApiCoordinate;
-  addressData: ApiAddressData;
-  diseases?: ApiDisease[];
-  tests?: ApiTestItem[];
-  patient: ApiPatient;
-  reservationStatus?: number;
-  arrivalStatue?: number;
+interface ApiHomeTreatmentLists {
+  homeTreatmentRequestQueries: ApiHomeTreatmentItem[];
 }
 
 export interface FetchedRequestDetail {
-  detail: LabRequestDetail;
+  detail: CareRequestDetail;
   workflowStep?: WorkflowStep;
   status?: RequestStatus;
-}
-
-// Prescription and checkup ids come from different backend tables and can
-// collide, so the UI id encodes both the backend id and the request type.
-export function toUiId(apiId: number, type: ApiRequestType): number {
-  return apiId * 2 + (type === "checkup" ? 1 : 0);
 }
 
 function formatDate(iso: string): string {
@@ -112,120 +57,49 @@ function formatTime(iso: string): string {
   });
 }
 
-function buildAddress(a: ApiAddressData): string {
-  const parts = [
-    a.city,
-    a.street,
-    a.title,
-    a.number ? `No. ${a.number}` : null,
-    a.floor ? `Floor ${a.floor}` : null,
-    a.unit ? `Unit ${a.unit}` : null,
-  ].filter((p): p is string => Boolean(p && String(p).trim() && p !== "string"));
+function joinServices(name: string[] | null | undefined): string {
+  const parts = (name ?? [])
+    .map((s) => (typeof s === "string" ? s.trim() : ""))
+    .filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : "—";
 }
 
-function buildMapQuery(coordinate: ApiCoordinate, address: string): string {
-  const { lat, long } = coordinate;
-  if (lat !== 0 || long !== 0) return `${lat},${long}`;
-  return address;
-}
-
-function pickCoords(
-  coordinate: ApiCoordinate | undefined,
-): { lat: number; lng: number } | undefined {
-  if (!coordinate) return undefined;
-  const { lat, long } = coordinate;
-  if (lat === 0 && long === 0) return undefined;
-  if (!Number.isFinite(lat) || !Number.isFinite(long)) return undefined;
-  return { lat, lng: long };
-}
-
-function mapGender(gender: number | null | undefined): string {
-  if (gender === 0) return "Male";
-  if (gender === 1) return "Female";
-  return "—";
-}
-
-function pickPhone(
-  patient: ApiPatient,
-  phoneNumber?: string | number | null,
-): string {
-  if (patient.phoneNumber && String(patient.phoneNumber).trim()) {
-    return String(patient.phoneNumber);
-  }
-  if (phoneNumber !== null && phoneNumber !== undefined && String(phoneNumber).trim()) {
-    return String(phoneNumber);
-  }
-  return "";
-}
-
 /**
- * Backend arrivalStatue on detail responses:
+ * Backend arrivalStatue on list responses:
  * 0 = start (approved / not yet arrived)
  * 1 = arrived
  * 2 = left
- * 3 = delivered
  */
 export function mapArrivalStatue(statue?: number): WorkflowStep | undefined {
   if (statue === 0) return "start";
   if (statue === 1) return "arrived";
   if (statue === 2) return "left";
-  if (statue === 3) return "delivered";
   return undefined;
 }
 
-function statusFromDetail(
+function statusFromItem(
+  listStatus: RequestStatus,
   reservationStatus?: number,
   arrivalStatue?: number,
-): RequestStatus | undefined {
-  if (reservationStatus === 0) return "new";
+): RequestStatus {
+  if (listStatus === "completed") return "completed";
+  if (listStatus === "new") return "new";
   if (arrivalStatue !== undefined && arrivalStatue > 0) return "inProgress";
   if (reservationStatus === 1) return "approved";
-  return undefined;
+  return listStatus;
 }
 
-function mapDetailPayload(data: ApiRequestDetail): LabRequestDetail {
-  const address = buildAddress(data.addressData);
-  const date = formatDate(data.referralTime);
-  const time = formatTime(data.referralTime);
-  const diseases = (data.diseases ?? []).map((d) => d.name).filter(Boolean);
-  const tests = (data.tests ?? [])
-    .map((t) => t.name ?? t.title ?? "")
-    .filter(Boolean)
-    .join(", ");
+function buildDetail(item: ApiHomeTreatmentItem): CareRequestDetail {
+  const date = formatDate(item.reservationDate);
+  const time = formatTime(item.reservationDate);
+  const services = joinServices(item.name);
 
-  return {
-    patientName: data.patient?.fullName?.trim() || "—",
-    phone: pickPhone(data.patient ?? {}, data.phoneNumber),
-    gender: mapGender(data.patient?.gender),
-    age: data.patient?.age ?? 0,
-    tests: tests || "—",
-    scheduledDate: date,
-    scheduledTime: time,
-    requestDate: date,
-    requestTime: time,
-    diseases,
-    outlinedDiseases: [],
-    patientComment: "",
-    supervisorComment: "",
-    address,
-    mapQuery: buildMapQuery(data.coordinate, address),
-    ...pickCoords(data.coordinate),
-  };
-}
-
-function buildListDetail(
-  item: ApiSampleRequest,
-  address: string,
-): LabRequestDetail {
-  const date = formatDate(item.dateTime);
-  const time = formatTime(item.dateTime);
   return {
     patientName: "—",
     phone: "",
     gender: "—",
     age: 0,
-    tests: "—",
+    services,
     scheduledDate: date,
     scheduledTime: time,
     requestDate: date,
@@ -234,150 +108,108 @@ function buildListDetail(
     outlinedDiseases: [],
     patientComment: "",
     supervisorComment: "",
-    address,
-    mapQuery: buildMapQuery(item.coordinate, address),
-    ...pickCoords(item.coordinate),
+    address: "—",
+    mapQuery: "",
   };
 }
 
 function mapItem(
-  item: ApiSampleRequest,
-  type: ApiRequestType,
-  status: RequestStatus,
-): LabRequest {
-  const address = buildAddress(item.addressData);
+  item: ApiHomeTreatmentItem,
+  listStatus: RequestStatus,
+): CareRequest {
+  const services = joinServices(item.name);
+  const step =
+    listStatus === "completed"
+      ? "done"
+      : listStatus === "new"
+        ? undefined
+        : (mapArrivalStatue(item.arrivalStatue) ?? "start");
+
   return {
-    id: toUiId(item.id, type),
+    id: item.id,
     apiId: item.id,
-    requestType: type,
-    title:
-      type === "prescription" ? "Prescription Lab Test" : "Checkup Reservation",
-    date: formatDate(item.dateTime),
-    time: formatTime(item.dateTime),
-    address,
-    status,
-    workflowStep:
-      status === "completed"
-        ? "done"
-        : status === "approved"
-          ? "start"
-          : undefined,
-    detail: buildListDetail(item, address),
+    title: services !== "—" ? services : "Home Care Request",
+    date: formatDate(item.reservationDate),
+    time: formatTime(item.reservationDate),
+    address: "—",
+    status: statusFromItem(
+      listStatus,
+      item.reservationStatus,
+      item.arrivalStatue,
+    ),
+    workflowStep: step,
+    detail: buildDetail(item),
   };
 }
 
 async function fetchList(
   path: string,
   status: RequestStatus,
-): Promise<LabRequest[]> {
-  const response = await fetch(`${API_BASE}/SamplingRequest/${path}`, {
+): Promise<CareRequest[]> {
+  const response = await fetch(`${API_BASE}/HomeTreatment/${path}`, {
     cache: "no-store",
   });
   if (!response.ok) {
     throw new Error(`GET ${path} failed with status ${response.status}`);
   }
-  const envelope = (await response.json()) as ApiEnvelope<ApiSampleLists>;
+  const envelope = (await response.json()) as ApiEnvelope<ApiHomeTreatmentLists>;
   if (!envelope.isSuccess) {
     throw new Error(`GET ${path} failed: ${envelope.message}`);
   }
-  const { prescriptionLabQueries = [], checkupReservationQueries = [] } =
-    envelope.data ?? {};
-  return [
-    ...prescriptionLabQueries.map((item) =>
-      mapItem(item, "prescription", status),
-    ),
-    ...checkupReservationQueries.map((item) =>
-      mapItem(item, "checkup", status),
-    ),
-  ];
+  const items = envelope.data?.homeTreatmentRequestQueries ?? [];
+  return items.map((item) => mapItem(item, status));
 }
 
-export async function fetchAllRequests(): Promise<LabRequest[]> {
+export async function fetchAllRequests(): Promise<CareRequest[]> {
   const [newRequests, confirmed, completed] = await Promise.all([
     fetchList("new-sapmle-requests", "new"),
-    fetchList("confirmed-sapmle-requests", "approved"),
-    fetchList("completed-sapmle-requests", "completed"),
+    fetchList("confirmed-requests", "approved"),
+    fetchList("completed-requests", "completed"),
   ]);
 
-  // Confirmed list has no step field; hydrate arrivalStatue from detail APIs.
-  const confirmedWithSteps = await Promise.all(
-    confirmed.map(async (request) => {
-      try {
-        const result = await fetchRequestDetail(
-          request.requestType,
-          request.apiId,
-        );
-        const step = result.workflowStep ?? "start";
-        const status =
-          step === "start"
-            ? "approved"
-            : step === "done"
-              ? "completed"
-              : "inProgress";
-        return {
-          ...request,
-          detail: result.detail,
-          workflowStep: step,
-          status,
-          address: result.detail.address || request.address,
-          date: result.detail.requestDate || request.date,
-          time: result.detail.requestTime || request.time,
-        } satisfies LabRequest;
-      } catch {
-        return request;
-      }
-    }),
-  );
-
-  return [...newRequests, ...confirmedWithSteps, ...completed];
+  return [...newRequests, ...confirmed, ...completed];
 }
 
-const DETAIL_PATHS: Record<ApiRequestType, string> = {
-  prescription: "prescription-lab-detail",
-  checkup: "checkup-detail",
-};
-
+/**
+ * Nurse gateway OpenAPI has no detail endpoint yet — return the list-shaped
+ * detail already attached to the request (or a minimal placeholder).
+ */
 export async function fetchRequestDetail(
-  type: ApiRequestType,
   apiId: number,
+  fallback?: CareRequest,
 ): Promise<FetchedRequestDetail> {
-  const path = DETAIL_PATHS[type];
-  const response = await fetch(
-    `${API_BASE}/SamplingRequest/${path}/${apiId}`,
-    { cache: "no-store" },
-  );
-  const envelope = await readApiEnvelope(response);
-  if (!response.ok || !envelope.isSuccess || !envelope.data) {
+  if (fallback && fallback.apiId === apiId && fallback.detail) {
+    return {
+      detail: fallback.detail,
+      workflowStep: fallback.workflowStep,
+      status: fallback.status,
+    };
+  }
+
+  // Re-fetch lists so a deep-linked request still hydrates after refresh.
+  const all = await fetchAllRequests();
+  const found = all.find((r) => r.apiId === apiId);
+  if (!found?.detail) {
     throw new ApiError(
-      envelope.message || `GET ${path}/${apiId} failed with status ${response.status}`,
-      response.status,
-      path,
+      `Request ${apiId} not found`,
+      404,
+      "HomeTreatment",
     );
   }
 
-  const data = envelope.data as ApiRequestDetail;
   return {
-    detail: mapDetailPayload(data),
-    workflowStep: mapArrivalStatue(data.arrivalStatue),
-    status: statusFromDetail(data.reservationStatus, data.arrivalStatue),
+    detail: found.detail,
+    workflowStep: found.workflowStep,
+    status: found.status,
   };
 }
 
-type WorkflowAction = "approve" | "arrive" | "leave" | "deliver";
+type WorkflowAction = "approve" | "arrive" | "leave";
 
-const ACTION_PATHS: Record<ApiRequestType, Record<WorkflowAction, string>> = {
-  prescription: {
-    approve: "approve-new-prescription-lab-request",
-    arrive: "arrive-prescription-lab-request",
-    leave: "leave-prescription-lab-request",
-    deliver: "deliver-prescription-lab-request",
-  },
-  checkup: {
-    approve: "approve-new-Checkup-lab-request",
-    arrive: "arrive-Checkup-lab-request",
-    leave: "leave-Checkup-lab-request",
-    deliver: "deliver-Checkup-lab-request",
-  },
+const ACTION_PATHS: Record<WorkflowAction, string> = {
+  approve: "approve-new-request",
+  arrive: "arrive-request",
+  leave: "leave-request",
 };
 
 export class ApiError extends Error {
@@ -408,20 +240,19 @@ async function readApiEnvelope(
 }
 
 export async function sendWorkflowAction(
-  type: ApiRequestType,
   action: WorkflowAction,
   apiId: number,
 ): Promise<void> {
-  const path = ACTION_PATHS[type][action];
-  // Backend now expects id in the path: /.../{id}
+  const path = ACTION_PATHS[action];
   const response = await fetch(
-    `${API_BASE}/SamplingRequest/${path}/${apiId}`,
+    `${API_BASE}/HomeTreatment/${path}/${apiId}`,
     { method: "PUT" },
   );
   const envelope = await readApiEnvelope(response);
   if (!response.ok || !envelope.isSuccess) {
     throw new ApiError(
-      envelope.message || `PUT ${path}/${apiId} failed with status ${response.status}`,
+      envelope.message ||
+        `PUT ${path}/${apiId} failed with status ${response.status}`,
       response.status,
       path,
     );

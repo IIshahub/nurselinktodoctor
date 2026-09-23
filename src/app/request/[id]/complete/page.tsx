@@ -20,7 +20,7 @@ export default function CompleteFormPage() {
 
   if (isLoading) return <PageLoader />;
 
-  if (request?.workflowStep === "delivered") {
+  if (request?.workflowStep === "left") {
     return <CompleteFormView request={request} />;
   }
 

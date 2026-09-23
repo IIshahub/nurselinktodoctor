@@ -1,10 +1,13 @@
-import type { LabRequest, RequestStatus, WorkflowStep } from "@/src/types/requests";
+import type {
+  CareRequest,
+  RequestStatus,
+  WorkflowStep,
+} from "@/src/types/requests";
 
 export const STEP_COLORS: Record<WorkflowStep, string> = {
   start: "#0D50FF",
   arrived: "#F97316",
   left: "#38BDF8",
-  delivered: "#9333EA",
   done: "#22C55E",
 };
 
@@ -14,7 +17,7 @@ export function getStatusForStep(step: WorkflowStep): RequestStatus {
   return "inProgress";
 }
 
-export function getActiveWorkflowRequests(requests: LabRequest[]) {
+export function getActiveWorkflowRequests(requests: CareRequest[]) {
   return requests.filter(
     (request) =>
       request.workflowStep &&

@@ -16,20 +16,19 @@ import {
 } from "@/src/lib/api";
 import { formatTimeNow } from "@/src/lib/workflow";
 import type {
+  CareRequest,
+  CareRequestDetail,
   CompletionReport,
-  LabRequest,
-  LabRequestDetail,
   RequestStatus,
   WorkflowStep,
 } from "@/src/types/requests";
 import { WORKFLOW_STEPS } from "@/src/types/requests";
 
-export const TAB_STORAGE_KEY = "lablinktodoctor-tab";
+export const TAB_STORAGE_KEY = "nurselinktodoctor-tab";
 
-// List endpoints don't report the current workflow step. Detail endpoints
-// expose arrivalStatue; until that is applied we keep a local overlay for
-// ignore / completion report / intermediate step progress.
-const OVERLAY_STORAGE_KEY = "lablinktodoctor-overlay";
+// List endpoints expose arrivalStatue; overlay still covers ignore / completion
+// report / optimistic step progress between refreshes.
+const OVERLAY_STORAGE_KEY = "nurselinktodoctor-overlay";
 
 interface RequestOverlay {
   workflowStep?: WorkflowStep;
@@ -37,8 +36,8 @@ interface RequestOverlay {
   startedAt?: string;
   completedAt?: string;
   completionReport?: CompletionReport;
-  collectorComment?: string;
-  detail?: LabRequestDetail;
+  nurseComment?: string;
+  detail?: CareRequestDetail;
 }
 
 interface OverlayState {
@@ -86,9 +85,9 @@ const STATUS_RANK: Record<RequestStatus, number> = {
 };
 
 function applyOverlay(
-  serverRequests: LabRequest[],
+  serverRequests: CareRequest[],
   overlay: OverlayState,
-): LabRequest[] {
+): CareRequest[] {
   const ignored = new Set(overlay.ignoredIds);
   return serverRequests
     .filter((request) => !ignored.has(request.id))
@@ -96,10 +95,8 @@ function applyOverlay(
       const patch = overlay.byId[request.id];
       if (!patch) return request;
 
-      const merged: LabRequest = { ...request };
+      const merged: CareRequest = { ...request };
 
-      // Prefer the further-along workflow/status so a stale local overlay
-      // cannot roll the UI back behind the backend arrivalStatue.
       const serverStepRank = workflowRank(request.workflowStep);
       const overlayStepRank = workflowRank(patch.workflowStep);
       if (overlayStepRank > serverStepRank && patch.workflowStep) {
@@ -115,13 +112,15 @@ function applyOverlay(
       if (patch.startedAt) merged.startedAt = patch.startedAt;
       if (patch.completedAt) merged.completedAt = patch.completedAt;
       if (patch.completionReport) merged.completionReport = patch.completionReport;
-      if (patch.collectorComment) merged.collectorComment = patch.collectorComment;
-      // Prefer API detail (patient name etc.) over placeholder list detail.
-      if (patch.detail?.patientName && patch.detail.patientName !== "—") {
-        merged.detail = patch.detail;
-        merged.address = patch.detail.address || merged.address;
-      } else if (!merged.detail && patch.detail) {
-        merged.detail = patch.detail;
+      if (patch.nurseComment) merged.nurseComment = patch.nurseComment;
+      if (patch.detail) {
+        merged.detail = { ...merged.detail, ...patch.detail } as CareRequestDetail;
+        if (patch.detail.address && patch.detail.address !== "—") {
+          merged.address = patch.detail.address;
+        }
+        if (patch.detail.services && patch.detail.services !== "—") {
+          merged.title = patch.detail.services;
+        }
       }
 
       return merged;
@@ -129,26 +128,26 @@ function applyOverlay(
 }
 
 interface RequestsContextValue {
-  requests: LabRequest[];
+  requests: CareRequest[];
   isLoading: boolean;
-  approveRequest: (id: number, detail?: LabRequestDetail) => Promise<void>;
+  approveRequest: (id: number, detail?: CareRequestDetail) => Promise<void>;
   ignoreRequest: (id: number) => Promise<void>;
-  advanceWorkflow: (id: number) => Promise<LabRequest | undefined>;
-  loadRequestDetail: (id: number) => Promise<LabRequestDetail | null>;
+  advanceWorkflow: (id: number) => Promise<CareRequest | undefined>;
+  loadRequestDetail: (id: number) => Promise<CareRequestDetail | null>;
   actionError: string | null;
   clearActionError: () => void;
   completeRequest: (
     id: number,
     report: CompletionReport,
-    collectorComment?: string,
+    nurseComment?: string,
   ) => Promise<void>;
-  getRequestById: (id: number) => LabRequest | undefined;
+  getRequestById: (id: number) => CareRequest | undefined;
 }
 
 const RequestsContext = createContext<RequestsContextValue | undefined>(undefined);
 
 export function RequestsProvider({ children }: { children: React.ReactNode }) {
-  const [serverRequests, setServerRequests] = useState<LabRequest[]>([]);
+  const [serverRequests, setServerRequests] = useState<CareRequest[]>([]);
   const [overlay, setOverlay] = useState<OverlayState>(EMPTY_OVERLAY);
   const [isLoading, setIsLoading] = useState(true);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -158,8 +157,6 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
     [serverRequests, overlay],
   );
 
-  // Keep a stable snapshot for callbacks so they don't recreate on every
-  // overlay/list update (which previously caused an infinite detail-fetch loop).
   const requestsRef = React.useRef(requests);
   requestsRef.current = requests;
 
@@ -197,18 +194,14 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
   const clearActionError = useCallback(() => setActionError(null), []);
 
   const loadRequestDetail = useCallback(
-    async (id: number): Promise<LabRequestDetail | null> => {
+    async (id: number): Promise<CareRequestDetail | null> => {
       const current = requestsRef.current.find((r) => r.id === id);
       if (!current) return null;
 
       try {
-        const result = await fetchRequestDetail(
-          current.requestType,
-          current.apiId,
-        );
+        const result = await fetchRequestDetail(current.apiId, current);
         const patch: RequestOverlay = { detail: result.detail };
         if (result.workflowStep) {
-          // Prefer backend arrivalStatue over stale local overlay for confirmed items.
           if (current.status !== "new" && current.status !== "completed") {
             patch.workflowStep = result.workflowStep;
             if (result.status) patch.status = result.status;
@@ -231,16 +224,14 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const approveRequest = useCallback(
-    async (id: number, detail?: LabRequestDetail) => {
+    async (id: number, detail?: CareRequestDetail) => {
       const current = requests.find((r) => r.id === id);
       if (!current) return;
 
       setActionError(null);
       try {
-        await sendWorkflowAction(current.requestType, "approve", current.apiId);
+        await sendWorkflowAction("approve", current.apiId);
       } catch (error) {
-        // Request may already be approved on the backend while the UI still
-        // shows it as new (e.g. after a refresh or stale local overlay).
         if (!(error instanceof ApiError) || error.status !== 404) {
           setActionError(error instanceof Error ? error.message : "approve failed");
           throw error;
@@ -260,7 +251,6 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
     [requests, patchOverlay, refresh],
   );
 
-  // No backend endpoint for ignoring yet: hide the request locally.
   const ignoreRequest = useCallback(async (id: number) => {
     setOverlay((prev) => {
       const next: OverlayState = {
@@ -277,16 +267,16 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
       const current = requests.find((r) => r.id === id);
       if (!current?.workflowStep) return undefined;
 
+      // After "left", completion is a local form — no further API action here.
+      if (current.workflowStep === "left" || current.workflowStep === "done") {
+        return current;
+      }
+
       const currentIndex = WORKFLOW_STEPS.indexOf(current.workflowStep);
       const nextStep = WORKFLOW_STEPS[currentIndex + 1];
-      if (!nextStep || current.workflowStep === "delivered") return current;
+      if (!nextStep || nextStep === "done") return current;
 
-      const action =
-        nextStep === "arrived"
-          ? "arrive"
-          : nextStep === "left"
-            ? "leave"
-            : "deliver";
+      const action = nextStep === "arrived" ? "arrive" : "leave";
 
       const patch: RequestOverlay = {
         workflowStep: nextStep,
@@ -296,11 +286,8 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
 
       setActionError(null);
       try {
-        await sendWorkflowAction(current.requestType, action, current.apiId);
+        await sendWorkflowAction(action, current.apiId);
       } catch (error) {
-        // Backend list endpoints don't expose the current workflow step, so the
-        // UI can show "start" while the server is already at arrived/left/etc.
-        // A 404 here usually means that transition already happened — sync locally.
         if (error instanceof ApiError && error.status === 404) {
           patchOverlay(id, patch);
           await refresh().catch(() => undefined);
@@ -319,16 +306,15 @@ export function RequestsProvider({ children }: { children: React.ReactNode }) {
     [requests, patchOverlay, refresh],
   );
 
-  // The backend has no completion-report endpoint yet; the "deliver" action
-  // (sent on the previous step) already moves the request to completed on the
-  // server, so the report itself is stored locally.
+  // No completion-report endpoint yet; leave already finished the visit on
+  // the server (or moves it toward completed), so the report is local-only.
   const completeRequest = useCallback(
-    async (id: number, report: CompletionReport, collectorComment?: string) => {
+    async (id: number, report: CompletionReport, nurseComment?: string) => {
       patchOverlay(id, {
         status: "completed",
         workflowStep: "done",
         completionReport: report,
-        collectorComment,
+        nurseComment,
         completedAt: formatTimeNow(),
       });
       refresh().catch(() => undefined);

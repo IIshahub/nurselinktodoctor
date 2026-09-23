@@ -3,26 +3,26 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Arrow, Phone, Microscope } from "@/src/components/icon";
+import { Arrow, Phone, NurseCare } from "@/src/components/icon";
 import { TAB_STORAGE_KEY, useRequests } from "@/src/contexts/RequestsContext";
-import type { LabRequest, LabRequestDetail } from "@/src/types/requests";
+import type { CareRequest, CareRequestDetail } from "@/src/types/requests";
 import AddressMapPreview from "./AddressMapPreview";
 
 interface RequestDetailsViewProps {
-  request: LabRequest;
+  request: CareRequest;
 }
 
 export default function RequestDetailsView({ request }: RequestDetailsViewProps) {
   const t = useTranslations();
   const router = useRouter();
   const { approveRequest, ignoreRequest, loadRequestDetail } = useRequests();
-  const [detail, setDetail] = useState<LabRequestDetail>(
+  const [detail, setDetail] = useState<CareRequestDetail>(
     request.detail ?? {
       patientName: "—",
       phone: "",
       gender: "—",
       age: 0,
-      tests: "—",
+      services: request.title || "—",
       scheduledDate: request.date,
       scheduledTime: request.time,
       requestDate: request.date,
@@ -32,7 +32,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       patientComment: "",
       supervisorComment: "",
       address: request.address,
-      mapQuery: request.address,
+      mapQuery: request.address !== "—" ? request.address : "",
     },
   );
   const [loadingDetail, setLoadingDetail] = useState(true);
@@ -62,8 +62,7 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
     if (submitting) return;
     setSubmitting(true);
     try {
-      // Next stage after swipe: approve API then move to "approved" tab
-      // (see Scalar: approve-new-prescription-lab-request / approve-new-Checkup-lab-request)
+      // Approve via HomeTreatment/approve-new-request/{id}
       await approveRequest(request.id, detail);
       sessionStorage.setItem(TAB_STORAGE_KEY, "approved");
       router.replace("/");
@@ -162,17 +161,17 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
         </p>
       </Card>
 
-      <SectionTitle>{t("requestedTests")}</SectionTitle>
+      <SectionTitle>{t("requestedServices")}</SectionTitle>
       <Card>
         <div className="flex min-w-0 items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10">
-            <Microscope className="h-5 w-5" color="#00BBD3" />
+            <NurseCare className="h-5 w-5" color="#00BBD3" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="break-words text-sm font-bold text-text">
               {request.title}
             </p>
-            <p className="mt-1 break-words text-xs text-text/60">{detail.tests}</p>
+            <p className="mt-1 break-words text-xs text-text/60">{detail.services}</p>
             <p className="mt-2 text-xs text-text/50">
               {detail.scheduledDate} - {detail.scheduledTime}
             </p>
@@ -238,24 +237,32 @@ export default function RequestDetailsView({ request }: RequestDetailsViewProps)
       </Card>
 
       <SectionTitle className="mt-5">{t("address")}</SectionTitle>
-      <p className="mb-3 break-words text-sm font-bold leading-6 text-text">
-        {t("address")}: {detail.address}
-      </p>
+      {detail.address && detail.address !== "—" ? (
+        <>
+          <p className="mb-3 break-words text-sm font-bold leading-6 text-text">
+            {t("address")}: {detail.address}
+          </p>
 
-      <AddressMapPreview
-        mapQuery={detail.mapQuery}
-        lat={detail.lat}
-        lng={detail.lng}
-        onOpenMaps={openMapPicker}
-      />
+          <AddressMapPreview
+            mapQuery={detail.mapQuery}
+            lat={detail.lat}
+            lng={detail.lng}
+            onOpenMaps={openMapPicker}
+          />
 
-      <button
-        type="button"
-        onClick={openMapPicker}
-        className="mt-3 w-full rounded-2xl border-2 border-teal py-3 text-sm font-semibold text-teal transition hover:bg-teal/5"
-      >
-        {t("openInMaps")}
-      </button>
+          <button
+            type="button"
+            onClick={openMapPicker}
+            className="mt-3 w-full rounded-2xl border-2 border-teal py-3 text-sm font-semibold text-teal transition hover:bg-teal/5"
+          >
+            {t("openInMaps")}
+          </button>
+        </>
+      ) : (
+        <Card>
+          <p className="text-sm text-text/40">—</p>
+        </Card>
+      )}
 
       {showMapPicker && (
         <div

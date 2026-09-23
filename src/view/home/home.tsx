@@ -2,14 +2,14 @@
 
 import React from "react";
 import { useTranslations } from "next-intl";
-import useLabConfig from "./dashboardItem";
+import useNurseConfig from "./dashboardItem";
 import StatsSection from "./StatsSection";
 import QuickActions from "./QuickActions";
 import RequestTabs from "./RequestTabs";
 
 export default function HomeView() {
   const t = useTranslations();
-  const { StatsData } = useLabConfig();
+  const { StatsData } = useNurseConfig();
 
   return (
     <div className="home-page relative mx-auto w-full overflow-x-hidden pb-6">

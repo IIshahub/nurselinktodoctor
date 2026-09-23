@@ -160,6 +160,19 @@ export const Microscope = ({ className, color = "#0D50FF" }: IconProps): JSX.Ele
   </svg>
 );
 
+/** Medical cross — used for home-care / nurse request cards. */
+export const NurseCare = ({ className, color = "#00BBD3" }: IconProps): JSX.Element => (
+  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={className}>
+    <circle cx="11" cy="11" r="9" stroke={color} strokeWidth="1.5" />
+    <path
+      d="M11 6v10M6 11h10"
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 export const Star = ({ className, color = "#EAB308" }: IconProps): JSX.Element => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={className}>
     <path

@@ -9,6 +9,7 @@ export {
   Schedule,
   PreviousPatients,
   Microscope,
+  NurseCare,
   Star,
   Emergency,
   CheckApprove,

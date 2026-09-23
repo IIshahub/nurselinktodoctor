@@ -3,8 +3,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lab Link To Doctor",
-  description: "Lab technician dashboard — LinkToDoctor",
+  title: "Nurse Link To Doctor",
+  description: "Nurse home-care dashboard — LinkToDoctor",
 };
 
 export default function RootLayout({

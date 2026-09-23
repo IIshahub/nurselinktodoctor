@@ -22,7 +22,6 @@ export default function ProgressStepper({
     start: t("workflowStart"),
     arrived: t("workflowArrived"),
     left: t("workflowLeft"),
-    delivered: t("workflowDelivered"),
     done: t("workflowDone"),
   };
 

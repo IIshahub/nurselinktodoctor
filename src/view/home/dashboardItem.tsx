@@ -1,6 +1,6 @@
 import { useTranslations } from "next-intl";
 
-export default function useLabConfig() {
+export default function useNurseConfig() {
   const t = useTranslations();
 
   const StatsData = [
@@ -16,10 +16,10 @@ export default function useLabConfig() {
     },
   ];
 
-  const LabData = {
+  const NurseData = {
     name: t("name"),
     image: "/assets/girl.png",
   };
 
-  return { LabData, DoctorData: LabData, StatsData };
+  return { NurseData, DoctorData: NurseData, StatsData };
 }

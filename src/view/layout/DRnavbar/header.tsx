@@ -6,14 +6,14 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Bell, Menu, Pen } from "@/src/components/icon";
 import { API_BASE } from "@/src/lib/api";
-import useLabConfig from "@/src/view/home/dashboardItem";
+import useNurseConfig from "@/src/view/home/dashboardItem";
 import { useRequests } from "@/src/contexts/RequestsContext";
 import HamburgerMenu from "./HamburgerMenu";
 import Logo from "@/src/components/UI/logo";
 
 export default function Header() {
   const t = useTranslations("settings");
-  const { DoctorData } = useLabConfig();
+  const { DoctorData } = useNurseConfig();
   const { requests } = useRequests();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [toggles, setToggles] = useState({
