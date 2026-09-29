@@ -1,3 +1,4 @@
+import { getAuthToken } from "@/src/lib/session";
 import type {
   CareRequest,
   CareRequestDetail,
@@ -142,13 +143,23 @@ function mapItem(
   };
 }
 
+function withAuth(init?: RequestInit): RequestInit {
+  const headers = new Headers(init?.headers);
+  const token = getAuthToken();
+  if (token && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return { ...init, headers };
+}
+
 async function fetchList(
   path: string,
   status: RequestStatus,
 ): Promise<CareRequest[]> {
-  const response = await fetch(`${API_BASE}/HomeTreatment/${path}`, {
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${API_BASE}/HomeTreatment/${path}`,
+    withAuth({ cache: "no-store" }),
+  );
   if (!response.ok) {
     throw new Error(`GET ${path} failed with status ${response.status}`);
   }
@@ -246,7 +257,7 @@ export async function sendWorkflowAction(
   const path = ACTION_PATHS[action];
   const response = await fetch(
     `${API_BASE}/HomeTreatment/${path}/${apiId}`,
-    { method: "PUT" },
+    withAuth({ method: "PUT" }),
   );
   const envelope = await readApiEnvelope(response);
   if (!response.ok || !envelope.isSuccess) {

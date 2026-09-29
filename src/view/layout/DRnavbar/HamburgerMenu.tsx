@@ -6,6 +6,7 @@ import { Arrow, Moon, Sun } from "@/src/components/icon";
 import { useTheme } from "@/src/contexts/ThemeContext";
 import LocaleSwitcher from "@/src/components/localeswitcher";
 import { API_BASE } from "@/src/lib/api";
+import { clearAuthSession } from "@/src/lib/session";
 import ProfileSection from "./ProfileSection";
 import ToggleItems from "./ToggleItems";
 import ActionMenuItems, { ProfileMenuItems } from "./MenuItems";
@@ -63,20 +64,7 @@ export default function HamburgerMenu({
   }, [isOpen]);
 
   const clearLocalAuth = () => {
-    ["token", "authToken"].forEach((cookieName) => {
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-      document.cookie = `${cookieName}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname}`;
-    });
-
-    [
-      "token",
-      "authToken",
-      "refreshToken",
-      "tokenExpiration",
-      "userEmail",
-      "userPhone",
-      "userName",
-    ].forEach((key) => localStorage.removeItem(key));
+    clearAuthSession();
   };
 
   const handleLogout = async () => {
@@ -96,15 +84,15 @@ export default function HamburgerMenu({
         setToastType("success");
         setShowToast(true);
         setTimeout(() => {
-          window.location.href = "/authentication";
+          window.location.href = "/login";
         }, 1000);
         return;
       }
 
-      const response = await fetch(`${API_BASE}/auth/logout`, {
+      const response = await fetch(`${API_BASE}/Auth/revoke-token`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          accept: "*/*",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -123,7 +111,7 @@ export default function HamburgerMenu({
 
       setShowToast(true);
       setTimeout(() => {
-        window.location.href = "/authentication";
+        window.location.href = "/login";
       }, 1500);
     } catch (error) {
       console.error("Logout error:", error);
@@ -133,7 +121,7 @@ export default function HamburgerMenu({
       setToastType("success");
       setShowToast(true);
       setTimeout(() => {
-        window.location.href = "/authentication";
+        window.location.href = "/login";
       }, 1500);
     } finally {
       setIsLoggingOut(false);

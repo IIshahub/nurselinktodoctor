@@ -583,3 +583,145 @@ export const ProfessionalInformation = ({
     <path d="M3 12h18" stroke={color} strokeWidth="1.8" />
   </svg>
 );
+
+type SizedIconProps = IconProps & { size?: number };
+
+export const Eye = ({
+  className,
+  color = "#2671FD",
+  onClick,
+  size,
+}: SizedIconProps): JSX.Element => {
+  const width = size ?? 21;
+  const height = size ? Math.round((size * 17) / 21) : 17;
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 21 17"
+      fill="none"
+      className={className}
+      onClick={onClick}
+      aria-hidden
+    >
+      <path
+        d="M20.5 8.80975C20.5 10.1112 16.3904 13.9876 10.5 13.9876C4.60955 13.9876 0.5 10.1112 0.5 8.80975C0.5 7.50826 5.02055 2.88017 10.5 2.88017C15.9794 2.88017 20.5 7.50826 20.5 8.80975Z"
+        stroke={color}
+        strokeLinecap="round"
+      />
+      <path
+        d="M13.5 8.5C13.5 10.1569 12.1569 11.5 10.5 11.5C8.84315 11.5 7.5 10.1569 7.5 8.5C7.5 6.84315 8.84315 5.5 10.5 5.5C12.1569 5.5 13.5 6.84315 13.5 8.5Z"
+        stroke={color}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+};
+
+export const EyeOff = ({
+  className,
+  color = "#2671FD",
+  onClick,
+  size,
+}: SizedIconProps): JSX.Element => {
+  const width = size ?? 21;
+  const height = size ? Math.round((size * 17) / 21) : 17;
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 21 17"
+      fill="none"
+      className={className}
+      onClick={onClick}
+      aria-hidden
+    >
+      <path
+        d="M17.2949 5.17235C19.2613 6.5357 20.5 8.12848 20.5 8.80975C20.5 10.1112 16.3904 13.9876 10.5 13.9876C9.69558 13.9876 8.92437 13.9153 8.19231 13.7872M14.9872 3.87524C13.6341 3.27891 12.1084 2.88017 10.5 2.88017C5.02055 2.88017 0.5 7.50826 0.5 8.80975C0.5 9.74597 2.62656 12.0146 6.01282 13.2142M10.3279 11.4909C11.008 11.5554 11.7134 11.4119 12.3499 11.0343C13.3121 10.4636 13.9024 9.48506 14.0333 8.43388M8.44872 10.6913C8.14727 10.4333 7.88422 10.1172 7.6766 9.74775C6.73189 8.06656 7.29252 5.91683 8.92882 4.9462C10.3584 4.0982 12.136 4.43071 13.1923 5.64932M18.3205 0.5L2.80769 16.5"
+        stroke={color}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+};
+
+export const Mail = ({
+  className,
+  color = "#2671FD",
+  onClick,
+  size = 24,
+}: SizedIconProps): JSX.Element => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    onClick={onClick}
+  >
+    <path
+      d="M21 8L17.4392 9.97822C15.454 11.0811 14.4614 11.6326 13.4102 11.8488C12.4798 12.0401 11.5202 12.0401 10.5898 11.8488C9.53864 11.6326 8.54603 11.0811 6.5608 9.97822L3 8M6.2 19H17.8C18.9201 19 19.4802 19 19.908 18.782C20.2843 18.5903 20.5903 18.2843 20.782 17.908C21 17.4802 21 16.9201 21 15.8V8.2C21 7.0799 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V15.8C3 16.9201 3 17.4802 3.21799 17.908C3.40973 18.2843 3.71569 18.5903 4.09202 18.782C4.51984 19 5.07989 19 6.2 19Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const GoogleColorVector = ({
+  className,
+  onClick,
+  size = 24,
+}: SizedIconProps): JSX.Element => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    onClick={onClick}
+  >
+    <path
+      d="M23.04 12.26c0-.85-.08-1.67-.22-2.45H12v4.63h6.19a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.43-4.96 3.43-8.55Z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 24c3.1 0 5.7-1.03 7.61-2.79l-3.72-2.89c-1.03.69-2.35 1.1-3.89 1.1-3 0-5.54-2.02-6.44-4.75H1.72v2.99A11.99 11.99 0 0 0 12 24Z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.56 14.67a7.2 7.2 0 0 1 0-4.6V7.09H1.72a12 12 0 0 0 0 10.57l3.84-2.99Z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 4.75c1.69 0 3.2.58 4.4 1.72l3.29-3.29C17.69 1.19 15.1 0 12 0 7.35 0 3.33 2.67 1.72 6.56l3.84 2.99C6.46 6.82 9 4.75 12 4.75Z"
+      fill="#EA4335"
+    />
+  </svg>
+);
+
+export const AppleVector = ({
+  className,
+  color = "#000000",
+  onClick,
+  size = 24,
+}: SizedIconProps): JSX.Element => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    className={className}
+    onClick={onClick}
+  >
+    <path
+      d="M17.05 12.72c.02 2.6 2.28 3.46 2.31 3.47-.02.06-.36 1.24-1.2 2.46-.72 1.05-1.47 2.1-2.66 2.12-1.16.02-1.54-.69-2.87-.69-1.33 0-1.75.67-2.85.71-1.14.04-2.01-1.13-2.74-2.18-1.5-2.17-2.64-6.14-1.1-8.82.76-1.33 2.13-2.17 3.61-2.19 1.12-.02 2.18.75 2.87.75.68 0 1.97-.93 3.32-.79.57.02 2.16.21 3.18 1.72-.08.05-1.9 1.11-1.87 3.44Z"
+      fill={color}
+    />
+    <path
+      d="M14.9 4.36c.61-.74 1.02-1.76.91-2.78-.88.04-1.94.59-2.57 1.32-.56.65-1.05 1.69-.92 2.69.98.08 1.97-.5 2.58-1.23Z"
+      fill={color}
+    />
+  </svg>
+);

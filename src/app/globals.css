@@ -273,3 +273,81 @@ html[lang="ar"] .home-quick-actions-title {
     animation: none;
   }
 }
+
+html:has(.login-page),
+body:has(.login-page) {
+  height: 100%;
+  min-height: 0;
+}
+
+.login-page {
+  background: #ffffff !important;
+  --fit: clamp(
+    0px,
+    calc(
+      (
+          100dvh - env(safe-area-inset-top, 0px) -
+            env(safe-area-inset-bottom, 0px) - 660px
+        ) / 184
+    ),
+    1px
+  );
+  --pad-top: calc(16px + 32 * var(--fit) + env(safe-area-inset-top, 0px));
+  --pad-bottom: calc(12px + 16 * var(--fit) + env(safe-area-inset-bottom, 0px));
+  --gap-logo: calc(12px + 26.85 * var(--fit));
+  --gap-xs: calc(4px + 4 * var(--fit));
+  --gap-sm: calc(6px + 8 * var(--fit));
+  --gap-md: calc(8px + 16 * var(--fit));
+  --gap-lg: calc(8px + 11 * var(--fit));
+}
+
+.login-heading,
+.login-text,
+.login-input,
+.login-btn {
+  font-family: "Poppins", "Nunito", sans-serif;
+}
+
+.login-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html[lang="fa"] .login-heading,
+html[lang="fa"] .login-text,
+html[lang="fa"] .login-input,
+html[lang="fa"] .login-btn,
+html[lang="ar"] .login-heading,
+html[lang="ar"] .login-text,
+html[lang="ar"] .login-input,
+html[lang="ar"] .login-btn {
+  font-family: var(--font-iran-sans-x), "IRANSansX", "Peyda", "Poppins",
+    sans-serif;
+}
+
+html:has(.signup-page),
+body:has(.signup-page) {
+  min-height: 0;
+}
+
+.signup-page {
+  background: #ffffff !important;
+  --pad-top: calc(16px + env(safe-area-inset-top, 0px));
+  --pad-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 480px) {
+  html:has(.signup-page) body,
+  html:has(.login-page) body {
+    background: #e2e8f0;
+  }
+
+  .signup-page,
+  .login-page {
+    max-width: 390px;
+    margin-inline: auto;
+    box-shadow:
+      0 0 0 1px rgba(148, 163, 184, 0.18),
+      0 12px 48px rgba(15, 23, 42, 0.08);
+  }
+}

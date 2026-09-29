@@ -33,6 +33,11 @@ export {
   ChevronRight,
   PersonalInformation,
   ProfessionalInformation,
+  Eye,
+  EyeOff,
+  Mail,
+  GoogleColorVector,
+  AppleVector,
 } from "./icon";
 
 export { CheckMark } from "./ui-icons";
