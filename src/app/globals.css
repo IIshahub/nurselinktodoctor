@@ -274,6 +274,49 @@ html[lang="ar"] .home-quick-actions-title {
   }
 }
 
+html:has(.auth-page),
+body:has(.auth-page) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.auth-page {
+  background: #ffffff !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.auth-frame {
+  height: 100%;
+}
+
+.auth-description {
+  font-family: "Poppins", "Nunito", sans-serif;
+}
+
+html[lang="fa"] .auth-description,
+html[lang="ar"] .auth-description {
+  font-family: var(--font-iran-sans-x), "IRANSansX", "Peyda", "Poppins", sans-serif;
+}
+
+.auth-btn {
+  font-family: "Poppins", "Nunito", sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+html[lang="fa"] .auth-btn,
+html[lang="ar"] .auth-btn {
+  font-family: var(--font-iran-sans-x), "IRANSansX", "Peyda", "Poppins", sans-serif;
+}
+
 html:has(.login-page),
 body:has(.login-page) {
   height: 100%;

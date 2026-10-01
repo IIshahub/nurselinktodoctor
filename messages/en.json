@@ -84,6 +84,7 @@
   "or_signup_with": "Or continue with",
   "continue_with_google": "Continue with Google",
   "continue_with_apple": "Continue with Apple",
+  "auth_description": "Healthcare, designed for nurses\nManage home-care requests, visits, and records in one secure workspace.",
   "login_button": "Sign in",
   "register_as_nurse": "Register as a nurse",
   "firstName_label": "First name",

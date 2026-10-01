@@ -8,7 +8,12 @@ import { getAuthToken } from "@/src/lib/session";
 import Header from "./DRnavbar/header";
 import Navbar from "./navbar/navbar";
 
-const AUTH_ROUTES = new Set(["login", "signup", "reset-password"]);
+const AUTH_ROUTES = new Set([
+  "authentication",
+  "login",
+  "signup",
+  "reset-password",
+]);
 
 export default function ClientWrapper({
   children,
@@ -20,20 +25,26 @@ export default function ClientWrapper({
   const isAuthRoute = AUTH_ROUTES.has(segment);
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [redirectHome, setRedirectHome] = useState(false);
 
   useEffect(() => {
     const hasToken = Boolean(getAuthToken());
     setAuthed(hasToken);
     setReady(true);
 
+    const hasCookie = document.cookie
+      .split("; ")
+      .some((row) => row.startsWith("token=") && row.slice("token=".length));
+
     if (!hasToken && !isAuthRoute) {
-      window.location.replace("/login");
-    } else if (hasToken && isAuthRoute) {
+      window.location.replace("/authentication");
+    } else if (hasCookie && segment === "authentication") {
+      setRedirectHome(true);
       window.location.replace("/");
     }
   }, [isAuthRoute]);
 
-  if (!ready || (isAuthRoute && authed) || (!isAuthRoute && !authed)) {
+  if (!ready || redirectHome || (!isAuthRoute && !authed)) {
     return null;
   }
 

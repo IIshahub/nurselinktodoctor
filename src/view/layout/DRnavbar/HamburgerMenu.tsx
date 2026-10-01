@@ -84,7 +84,7 @@ export default function HamburgerMenu({
         setToastType("success");
         setShowToast(true);
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/authentication";
         }, 1000);
         return;
       }
@@ -111,7 +111,7 @@ export default function HamburgerMenu({
 
       setShowToast(true);
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/authentication";
       }, 1500);
     } catch (error) {
       console.error("Logout error:", error);
@@ -121,7 +121,7 @@ export default function HamburgerMenu({
       setToastType("success");
       setShowToast(true);
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/authentication";
       }, 1500);
     } finally {
       setIsLoggingOut(false);
