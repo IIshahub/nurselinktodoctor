@@ -19,6 +19,7 @@ import {
 } from "@/src/lib/auth";
 import { extractDigits } from "@/src/utils/digits";
 import AuthHeader from "./AuthHeader";
+import LoginLogo from "./LoginLogo";
 import EnteringPanel from "./EnteringPanel";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -83,7 +84,7 @@ export default function LoginView() {
       {enteringPanel && <EnteringPanel message={t("entering_panel")} />}
       <div className="login-page relative z-10 flex min-h-[100dvh] w-full justify-center bg-white">
         <div className="flex w-full max-w-[390px] flex-col px-6 pb-[var(--pad-bottom)] pt-[var(--pad-top)]">
-          <AuthHeader />
+          <AuthHeader logo={<LoginLogo />} />
 
           <div className="mx-auto mt-[var(--gap-logo)] flex h-[calc(61px+18*var(--fit))] w-full max-w-[316px] flex-col items-center justify-center gap-[15px] px-[20px]">
             <h1 className="login-heading w-full text-center text-[16px] font-semibold capitalize leading-[16px] text-black">

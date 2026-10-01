@@ -16,6 +16,7 @@ import {
 } from "@/src/lib/auth";
 import { extractDigits } from "@/src/utils/digits";
 import AuthHeader from "./AuthHeader";
+import LoginLogo from "./LoginLogo";
 import EnteringPanel from "./EnteringPanel";
 import OTPModal from "./OTPModal";
 
@@ -319,7 +320,11 @@ export default function SignupView() {
       />
       <div className="signup-page relative z-10 flex min-h-[100dvh] w-full justify-center bg-white">
         <div className="flex w-full max-w-[390px] flex-col px-6 pb-[var(--pad-bottom)] pt-[var(--pad-top)]">
-          <AuthHeader showBack onBack={() => window.history.back()} />
+          <AuthHeader
+            showBack
+            onBack={() => window.history.back()}
+            logo={<LoginLogo />}
+          />
 
           <div className="mx-auto mt-6 flex w-full max-w-[316px] flex-col items-center justify-center gap-[12px] px-[12px]">
             <h1 className="login-heading w-full text-center text-[16px] font-semibold capitalize leading-[20px] text-black">

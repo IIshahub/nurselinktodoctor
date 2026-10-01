@@ -7,9 +7,11 @@ import { Arrow } from "@/src/components/icon";
 export default function AuthHeader({
   showBack = false,
   onBack,
+  logo,
 }: {
   showBack?: boolean;
   onBack?: () => void;
+  logo?: React.ReactNode;
 }) {
   return (
     <div className="relative flex justify-center">
@@ -23,7 +25,7 @@ export default function AuthHeader({
           <Arrow className="h-5 w-5 ltr:rotate-270 rtl:rotate-90" color="#2671FD" />
         </button>
       )}
-      <Logo variant="compact" priority />
+      {logo ?? <Logo variant="compact" priority />}
       <div className="absolute end-0 top-0">
         <LocaleSwitcher />
       </div>
