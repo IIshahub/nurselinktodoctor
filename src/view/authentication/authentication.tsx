@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import Logo from "@/src/components/UI/logo";
+import AuthLogo from "./AuthLogo";
 
 export default function AuthenticationView() {
   const t = useTranslations();
@@ -12,7 +12,7 @@ export default function AuthenticationView() {
       <div className="auth-frame flex h-full w-full max-w-[390px] flex-col items-center overflow-hidden px-6 pt-safe pb-safe">
         <div className="min-h-0 flex-[2.42] basis-0" />
 
-        <Logo variant="splash" className="shrink-0" priority />
+        <AuthLogo />
 
         <p className="auth-description mt-[clamp(12px,4vh,32px)] min-h-[86px] w-full max-w-[290px] shrink-0 whitespace-pre-line text-center text-[14px] font-normal leading-[20px] text-black">
           {t("auth_description")}
