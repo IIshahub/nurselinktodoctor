@@ -6,10 +6,10 @@ import type {
   WorkflowStep,
 } from "@/src/types/requests";
 
-// Same-origin /backend/* is rewritten by next.config to the nurse API
-// (avoids browser CORS). Override with NEXT_PUBLIC_BACKEND_API_URL if needed.
+// Nurse API origin. Override with NEXT_PUBLIC_BACKEND_API_URL if needed.
 export const API_BASE = (
-  process.env.NEXT_PUBLIC_BACKEND_API_URL ?? "/backend"
+  process.env.NEXT_PUBLIC_BACKEND_API_URL ??
+  "https://apinurse.linktodoctor.app/api"
 ).replace(/\/$/, "");
 
 interface ApiEnvelope<T> {
