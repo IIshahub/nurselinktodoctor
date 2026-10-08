@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Eye, EyeOff } from "@/src/components/icon";
@@ -148,21 +148,22 @@ export default function SignupView() {
     type: "success" | "error" | "info";
   } | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoadingPlaces(true);
-      try {
-        const response = await fetch("/api/geo/provinces");
-        const result = await response.json();
-        setProvinces(Array.isArray(result.data) ? result.data : []);
-      } catch {
-        setProvinces([]);
-      } finally {
-        setLoadingPlaces(false);
-      }
-    };
-    void load();
+  const loadProvinces = useCallback(async () => {
+    setLoadingPlaces(true);
+    try {
+      const response = await fetch("/api/geo/provinces", { cache: "no-store" });
+      const result = await response.json();
+      setProvinces(Array.isArray(result.data) ? result.data : []);
+    } catch {
+      setProvinces([]);
+    } finally {
+      setLoadingPlaces(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadProvinces();
+  }, [loadProvinces]);
 
   useEffect(() => {
     if (!provinceId) {
@@ -258,24 +259,20 @@ export default function SignupView() {
         return;
       }
 
-      const loginAttempts = [
-        ...(email.trim()
-          ? [{ email: email.trim(), phoneNumber: "", password }]
-          : []),
-        { email: "", phoneNumber: cleanedPhone, password },
-      ];
+      const loginResult = await loginNurse({
+        email: "",
+        phoneNumber: cleanedPhone,
+        password,
+      });
 
-      for (const attempt of loginAttempts) {
-        const loginResult = await loginNurse(attempt);
-        if (loginResult.tokens.token) {
-          saveNurseSession(loginResult.tokens, {
-            userName: `${firstName.trim()} ${lastName.trim()}`.trim(),
-            userEmail: email.trim(),
-            userPhone: cleanedPhone,
-          });
-          window.location.href = "/";
-          return;
-        }
+      if (loginResult.tokens.token) {
+        saveNurseSession(loginResult.tokens, {
+          userName: `${firstName.trim()} ${lastName.trim()}`.trim(),
+          userEmail: email.trim(),
+          userPhone: cleanedPhone,
+        });
+        window.location.href = "/";
+        return;
       }
 
       setEnteringPanel(false);
@@ -457,6 +454,9 @@ export default function SignupView() {
               <div className={boxClass()}>
                 <select
                   value={provinceId}
+                  onPointerDown={() => {
+                    void loadProvinces();
+                  }}
                   onChange={(e) => {
                     setProvinceId(e.target.value);
                     setCityId("");
