@@ -53,7 +53,7 @@ export default function SwipeableCard({
     if (reduceMotion) return;
 
     const startTimer = window.setTimeout(() => setHintActive(true), 450);
-    const stopTimer = window.setTimeout(() => setHintActive(false), 4300);
+    const stopTimer = window.setTimeout(() => setHintActive(false), 6100);
 
     return () => {
       window.clearTimeout(startTimer);
@@ -125,7 +125,7 @@ export default function SwipeableCard({
         className={`relative touch-pan-y ease-out ${
           hintActive
             ? "swipe-hint-nudge"
-            : "transition-transform duration-200"
+            : "transition-transform duration-350"
         }`}
         onAnimationEnd={() => setHintActive(false)}
         onPointerDown={(event) => {

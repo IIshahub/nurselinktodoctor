@@ -3,14 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import {
-  AppleVector,
-  Eye,
-  EyeOff,
-  GoogleColorVector,
-  Lock,
-  Mail,
-} from "@/src/components/icon";
+import { Eye, EyeOff, Lock, Mail } from "@/src/components/icon";
 import { useLocalizedDigits } from "@/src/hooks/useLocalizedDigits";
 import {
   getApiErrorMessage,
@@ -114,7 +107,9 @@ export default function LoginView() {
                 <Mail className="pointer-events-none shrink-0" color="#2671FD" size={20} />
                 <input
                   id="emailOrPhone"
+                  name="username"
                   type="text"
+                  autoComplete="username"
                   required
                   value={
                     /[A-Za-z@._-]/.test(emailOrPhone)
@@ -146,6 +141,8 @@ export default function LoginView() {
                 <Lock className="pointer-events-none shrink-0" color="#2671FD" />
                 <input
                   id="password"
+                  name="password"
+                  autoComplete="current-password"
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
@@ -186,27 +183,6 @@ export default function LoginView() {
               {loading ? t("logging_in") : t("button")}
             </button>
           </form>
-
-          <p className="login-text mt-[var(--gap-md)] text-center text-[12px] leading-[18px] text-[#6B7280]">
-            {t("or_signup_with")}
-          </p>
-
-          <div className="mt-[var(--gap-sm)] flex flex-col items-center gap-[var(--gap-xs)]">
-            <button
-              type="button"
-              className="login-btn flex h-[62px] w-[167px] flex-col items-center justify-center gap-0.5 rounded-2xl border border-[#E2E8F0] bg-white px-2.5 py-2.5 text-[12px] font-medium leading-none text-[#1F2937]"
-            >
-              <GoogleColorVector size={18} />
-              {t("continue_with_google")}
-            </button>
-            <button
-              type="button"
-              className="login-btn flex h-[62px] w-[167px] flex-col items-center justify-center gap-0.5 rounded-2xl border border-[#E2E8F0] bg-white px-2.5 py-2.5 text-[12px] font-medium leading-none text-[#1F2937]"
-            >
-              <AppleVector size={18} />
-              {t("continue_with_apple")}
-            </button>
-          </div>
 
           <p className="login-text mt-[var(--gap-md)] text-center text-[12px] leading-[18px] text-[#6B7280]">
             {t("signup_prompt")}{" "}

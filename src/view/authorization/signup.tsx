@@ -15,6 +15,7 @@ import {
   verifyOtp,
 } from "@/src/lib/auth";
 import { extractDigits } from "@/src/utils/digits";
+import FormSelect from "@/src/components/form/FormSelect";
 import AuthHeader from "./AuthHeader";
 import LoginLogo from "./LoginLogo";
 import EnteringPanel from "./EnteringPanel";
@@ -26,11 +27,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_RE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%!]).{8,}$/;
 
 const EDUCATION = [
-  { value: 0, labelKey: "educationLevel_associate" },
   { value: 1, labelKey: "educationLevel_bachelor" },
   { value: 2, labelKey: "educationLevel_master" },
   { value: 3, labelKey: "educationLevel_phd" },
-  { value: 4, labelKey: "educationLevel_specialist" },
+  { value: 4, labelKey: "educationLevel_other" },
 ] as const;
 
 function isValidNationalId(code: string) {
@@ -108,13 +108,11 @@ function graduationToIso(yearText: string): string {
 const fieldLabel =
   "login-heading mb-1.5 block text-[14px] font-semibold leading-[16px] text-black";
 const fieldInput =
-  "login-input h-full w-full min-w-0 border-0 bg-transparent text-[13px] text-[#2671FD] placeholder:text-[#93B4F5] focus:outline-none focus:ring-0";
-
-function boxClass(invalid?: boolean) {
-  return `flex h-[45px] w-full items-center rounded-[13px] border bg-[#FEFEFD] px-3 ${
-    invalid ? "border-red-500" : "border-[#E2E8F0]"
-  }`;
-}
+  "login-input h-[45px] w-full rounded-[13px] border border-[#E2E8F0] bg-[#FEFEFD] px-4 text-[13px] text-[#2671FD] placeholder:text-[#93B4F5] focus:border-[#2563EB] focus:outline-none focus:ring-0";
+const fieldBox =
+  "flex min-h-[45px] w-full items-center rounded-[13px] border border-[#E2E8F0] bg-[#FEFEFD] px-4";
+const fieldInnerInput =
+  "login-input h-full min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#2671FD] placeholder:text-[#93B4F5] focus:outline-none focus:ring-0";
 
 export default function SignupView() {
   const t = useTranslations();
@@ -333,239 +331,217 @@ export default function SignupView() {
           </div>
 
           <form onSubmit={handleSubmit} className="mx-auto mt-4 flex w-full flex-col gap-3">
-            <div className="flex gap-3">
-              <label className="flex-1">
-                <span className={fieldLabel}>{t("firstName_label")}</span>
-                <div className={boxClass()}>
-                  <input
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    placeholder={t("firstName_placeholder")}
-                    className={fieldInput}
-                    required
-                  />
-                </div>
-              </label>
-              <label className="flex-1">
-                <span className={fieldLabel}>{t("familyName_label")}</span>
-                <div className={boxClass()}>
-                  <input
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder={t("familyName_placeholder")}
-                    className={fieldInput}
-                    required
-                  />
-                </div>
-              </label>
-            </div>
+            <label>
+              <span className={fieldLabel}>{t("firstName_label")}</span>
+              <input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder={t("firstName_placeholder")}
+                className={fieldInput}
+                required
+              />
+            </label>
+            <label>
+              <span className={fieldLabel}>{t("familyName_label")}</span>
+              <input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder={t("familyName_placeholder")}
+                className={fieldInput}
+                required
+              />
+            </label>
 
             <label>
               <span className={fieldLabel}>{t("nationalId_label")}</span>
-              <div className={boxClass()}>
-                <input
-                  value={display(nationalCode)}
-                  onChange={(e) =>
-                    setNationalCode(extractDigits(e.target.value).slice(0, 10))
-                  }
-                  placeholder={t("nationalId_placeholder")}
-                  inputMode="numeric"
-                  className={fieldInput}
-                  required
-                />
-              </div>
+              <input
+                value={display(nationalCode)}
+                onChange={(e) =>
+                  setNationalCode(extractDigits(e.target.value).slice(0, 10))
+                }
+                placeholder={t("nationalId_placeholder")}
+                inputMode="numeric"
+                className={fieldInput}
+                required
+              />
             </label>
 
-            <label>
+            <label htmlFor="username">
               <span className={fieldLabel}>{t("mobileNumber_label")}</span>
-              <div className={boxClass()}>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
+                value={display(phone)}
+                onChange={(e) => setPhone(extractDigits(e.target.value).slice(0, 11))}
+                placeholder={t("mobileNumber_placeholder")}
+                inputMode="numeric"
+                className={fieldInput}
+                required
+              />
+            </label>
+
+            <label htmlFor="email">
+              <span className={fieldLabel}>{t("email_label")}</span>
+              <input
+                id="email"
+                name="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
+                dir="ltr"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("email_placeholder")}
+                className={fieldInput}
+              />
+            </label>
+
+            <label htmlFor="new-password">
+              <span className={fieldLabel}>{t("password_label")}</span>
+              <div className={fieldBox}>
                 <input
-                  value={display(phone)}
-                  onChange={(e) => setPhone(extractDigits(e.target.value).slice(0, 11))}
-                  placeholder={t("mobileNumber_placeholder")}
-                  inputMode="numeric"
-                  className={fieldInput}
+                  id="new-password"
+                  name="new-password"
+                  autoComplete="new-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t("password_placeholder")}
+                  className={fieldInnerInput}
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="ms-2 shrink-0"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <Eye color="#2671FD" /> : <EyeOff color="#2671FD" />}
+                </button>
               </div>
             </label>
-
-            <label>
-              <span className={fieldLabel}>{t("email_label")}</span>
-              <div className={boxClass()}>
+            <label htmlFor="confirm-password">
+              <span className={fieldLabel}>{t("confirmPassword_label")}</span>
+              <div className={fieldBox}>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("email_placeholder")}
-                  className={fieldInput}
+                  id="confirm-password"
+                  name="confirm-password"
+                  autoComplete="new-password"
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder={t("confirmPassword_placeholder")}
+                  className={fieldInnerInput}
+                  required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  className="ms-2 shrink-0"
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
+                >
+                  {showConfirm ? <Eye color="#2671FD" /> : <EyeOff color="#2671FD" />}
+                </button>
               </div>
             </label>
-
-            <div className="flex gap-3">
-              <label className="flex-1">
-                <span className={fieldLabel}>{t("password_label")}</span>
-                <div className={boxClass()}>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t("password_placeholder")}
-                    className={fieldInput}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="shrink-0"
-                  >
-                    {showPassword ? <Eye color="#2671FD" /> : <EyeOff color="#2671FD" />}
-                  </button>
-                </div>
-              </label>
-              <label className="flex-1">
-                <span className={fieldLabel}>{t("confirmPassword_label")}</span>
-                <div className={boxClass()}>
-                  <input
-                    type={showConfirm ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder={t("confirmPassword_placeholder")}
-                    className={fieldInput}
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirm((v) => !v)}
-                    className="shrink-0"
-                  >
-                    {showConfirm ? <Eye color="#2671FD" /> : <EyeOff color="#2671FD" />}
-                  </button>
-                </div>
-              </label>
-            </div>
             <p className="login-text -mt-1 text-[11px] font-light leading-[15px] text-[#6B7280]">
               {t("password_description")}
             </p>
 
-            <label>
+            <div>
               <span className={fieldLabel}>{t("province_label")}</span>
-              <div className={boxClass()}>
-                <select
-                  value={provinceId}
-                  onPointerDown={() => {
-                    void loadProvinces();
-                  }}
-                  onChange={(e) => {
-                    setProvinceId(e.target.value);
-                    setCityId("");
-                  }}
-                  className={fieldInput}
-                >
-                  <option value="">
-                    {loadingPlaces ? t("loading") : t("province_placeholder")}
-                  </option>
-                  {provinces.map((province) => (
-                    <option key={province.id} value={province.id}>
-                      {province.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
+              <FormSelect
+                value={provinceId}
+                onChange={(value) => {
+                  setProvinceId(value);
+                  setCityId("");
+                }}
+                options={provinces.map((province) => ({
+                  value: String(province.id),
+                  label: province.name,
+                }))}
+                placeholder={loadingPlaces ? t("loading") : t("province_placeholder")}
+                emptyText={t("no_results")}
+              />
+            </div>
 
-            <label>
+            <div>
               <span className={fieldLabel}>{t("city_label")}</span>
-              <div className={boxClass()}>
-                <select
-                  value={cityId}
-                  onChange={(e) => setCityId(e.target.value)}
-                  className={fieldInput}
-                  disabled={!provinceId}
-                >
-                  <option value="">
-                    {provinceId ? t("city_placeholder") : t("city_needs_province")}
-                  </option>
-                  {cities.map((city) => (
-                    <option key={city.id} value={city.id}>
-                      {city.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
+              <FormSelect
+                value={cityId}
+                onChange={setCityId}
+                disabled={!provinceId}
+                options={cities.map((city) => ({
+                  value: String(city.id),
+                  label: city.name,
+                }))}
+                placeholder={
+                  provinceId ? t("city_placeholder") : t("city_needs_province")
+                }
+                emptyText={t("no_results")}
+              />
+            </div>
 
             <label>
               <span className={fieldLabel}>{t("graduationYear_label")}</span>
-              <div className={boxClass()}>
-                <input
-                  value={display(graduationYear)}
-                  onChange={(e) =>
-                    setGraduationYear(extractDigits(e.target.value).slice(0, 4))
-                  }
-                  placeholder={t("graduationYear_placeholder")}
-                  inputMode="numeric"
-                  className={fieldInput}
-                />
-              </div>
+              <input
+                value={display(graduationYear)}
+                onChange={(e) =>
+                  setGraduationYear(extractDigits(e.target.value).slice(0, 4))
+                }
+                placeholder={t("graduationYear_placeholder")}
+                inputMode="numeric"
+                className={fieldInput}
+              />
             </label>
 
             <label>
               <span className={fieldLabel}>{t("university_label")}</span>
-              <div className={boxClass()}>
-                <input
-                  value={university}
-                  onChange={(e) => setUniversity(e.target.value)}
-                  placeholder={t("university_placeholder")}
-                  className={fieldInput}
-                />
-              </div>
+              <input
+                value={university}
+                onChange={(e) => setUniversity(e.target.value)}
+                placeholder={t("university_placeholder")}
+                className={fieldInput}
+              />
             </label>
 
             <label>
               <span className={fieldLabel}>{t("experience_label")}</span>
-              <div className={boxClass()}>
-                <input
-                  value={display(experience)}
-                  onChange={(e) =>
-                    setExperience(extractDigits(e.target.value).slice(0, 2))
-                  }
-                  placeholder={t("experience_placeholder")}
-                  inputMode="numeric"
-                  className={fieldInput}
-                />
-              </div>
+              <input
+                value={display(experience)}
+                onChange={(e) =>
+                  setExperience(extractDigits(e.target.value).slice(0, 2))
+                }
+                placeholder={t("experience_placeholder")}
+                inputMode="numeric"
+                className={fieldInput}
+              />
             </label>
 
-            <label>
+            <div>
               <span className={fieldLabel}>{t("educationLevel_label")}</span>
-              <div className={boxClass()}>
-                <select
-                  value={academicLevel}
-                  onChange={(e) => setAcademicLevel(e.target.value)}
-                  className={fieldInput}
-                >
-                  <option value="">{t("educationLevel_placeholder")}</option>
-                  {EDUCATION.map((item) => (
-                    <option key={item.value} value={item.value}>
-                      {t(item.labelKey)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </label>
+              <FormSelect
+                value={academicLevel}
+                onChange={setAcademicLevel}
+                options={EDUCATION.map((item) => ({
+                  value: String(item.value),
+                  label: t(item.labelKey),
+                }))}
+                placeholder={t("educationLevel_placeholder")}
+                emptyText={t("no_results")}
+              />
+            </div>
 
             <label>
               <span className={fieldLabel}>{t("signup_address_label")}</span>
-              <div className={boxClass()}>
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t("signup_address_placeholder")}
-                  className={fieldInput}
-                />
-              </div>
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={t("signup_address_placeholder")}
+                className={fieldInput}
+              />
             </label>
 
             <label>
@@ -575,7 +551,7 @@ export default function SignupView() {
                 onChange={(e) => setBiography(e.target.value)}
                 placeholder={t("biography_placeholder")}
                 rows={3}
-                className="login-input w-full rounded-[13px] border border-[#E2E8F0] bg-[#FEFEFD] px-3 py-2 text-[13px] text-[#2671FD] placeholder:text-[#93B4F5] focus:outline-none"
+                className="login-input min-h-[96px] w-full resize-none rounded-[13px] border border-[#E2E8F0] bg-[#FEFEFD] px-4 py-3 text-[13px] text-[#2671FD] placeholder:text-[#93B4F5] focus:border-[#2563EB] focus:outline-none focus:ring-0"
               />
             </label>
 
